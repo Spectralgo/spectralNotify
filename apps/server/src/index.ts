@@ -1,4 +1,3 @@
-import { env } from "cloudflare:workers";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
@@ -11,14 +10,29 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-const app = new Hono();
+type Env = {
+	CORS_ORIGIN: string;
+	BETTER_AUTH_SECRET: string;
+	BETTER_AUTH_URL: string;
+	ALLOWED_EMAIL: string;
+	DB: D1Database;
+};
+
+const app = new Hono<{ Bindings: Env }>();
 
 app.use(logger());
 app.use(
 	"/*",
 	cors({
-		origin: env.CORS_ORIGIN || "",
-		allowMethods: ["GET", "POST", "OPTIONS"],
+		origin: (origin, c) => {
+			const corsOrigin = c.env.CORS_ORIGIN;
+			// In development, allow localhost origins
+			if (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
+				return origin;
+			}
+			return corsOrigin || origin;
+		},
+		allowMethods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
 		allowHeaders: ["Content-Type", "Authorization"],
 		credentials: true,
 	}),

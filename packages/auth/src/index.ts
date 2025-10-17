@@ -37,5 +37,27 @@ export const auth = betterAuth({
 		//   domain: "<your-workers-subdomain>",
 		// },
 	},
-  plugins: [expo()]
+	events: {
+		async onSignUp({ user }) {
+			const allowedEmails = env.ALLOWED_EMAIL.split(",").map((email) =>
+				email.trim(),
+			);
+			if (!allowedEmails.includes(user.email)) {
+				throw new Error(
+					"Access restricted. Only authorized users can sign up.",
+				);
+			}
+		},
+		async onSignIn({ user }) {
+			const allowedEmails = env.ALLOWED_EMAIL.split(",").map((email) =>
+				email.trim(),
+			);
+			if (!allowedEmails.includes(user.email)) {
+				throw new Error(
+					"Access restricted. Only authorized users can sign in.",
+				);
+			}
+		},
+	},
+	plugins: [expo()],
 });
