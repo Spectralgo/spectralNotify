@@ -9,7 +9,7 @@ config({ path: "./.env" });
 config({ path: "./apps/web/.env" });
 config({ path: "./apps/server/.env" });
 
-const app = await alchemy("spectralNotify");
+const app = await alchemy("spectral-notify");
 
 await Exec("db-generate", {
 	cwd: "packages/db",
@@ -20,11 +20,13 @@ const db = await D1Database("database", {
 	migrationsDir: "packages/db/src/migrations",
 });
 
+// Create web first to get its URL
 export const web = await Vite("web", {
 	cwd: "apps/web",
 	assets: "dist",
+	compatibility: "node",
 	bindings: {
-		VITE_SERVER_URL: process.env.VITE_SERVER_URL || "",
+		VITE_SERVER_URL: "",
 	},
 	dev: {
 		command: "pnpm run dev",
@@ -37,14 +39,19 @@ export const server = await Worker("server", {
 	compatibility: "node",
 	bindings: {
 		DB: db,
-		CORS_ORIGIN: process.env.CORS_ORIGIN || "",
+		CORS_ORIGIN: web.url,
 		BETTER_AUTH_SECRET: alchemy.secret(process.env.BETTER_AUTH_SECRET),
-		BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || "",
+		BETTER_AUTH_URL: "",
+		ALLOWED_EMAIL: alchemy.secret(process.env.ALLOWED_EMAIL),
 	},
 	dev: {
 		port: 8094,
 	},
 });
+
+// Update web binding with server URL after server is created
+web.bindings.VITE_SERVER_URL = server.url;
+server.bindings.BETTER_AUTH_URL = server.url;
 
 console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);
