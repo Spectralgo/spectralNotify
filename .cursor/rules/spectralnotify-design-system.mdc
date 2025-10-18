@@ -1,0 +1,99 @@
+---
+alwaysApply: false
+description: "SpectralNotify design system mapping from SpectralChat v2.0; auth styling and token usage"
+---
+
+## SpectralNotify Design Tokens & Auth Styling
+
+Use CSS variables and OKLCH tokens. Do not hard-code hex colors. Map SpectralChat guidance to spectralNotify auth pages and shared UI.
+
+### Where tokens are defined
+- Web globals: [apps/web/src/index.css](mdc:apps/web/src/index.css)
+  - Provides semantic tokens `--background`, `--foreground`, `--primary`, `--secondary`, `--ring`, `--border`, sidebar tokens, and radius scale via `@theme inline`.
+- Button base: [apps/web/src/components/ui/button.tsx](mdc:apps/web/src/components/ui/button.tsx)
+  - Variants consume semantic tokens (e.g., `bg-primary`, `text-primary-foreground`, `focus-visible:ring-ring/50`).
+
+### Auth screens consuming styles
+- Route: [apps/web/src/routes/_auth/login.tsx](mdc:apps/web/src/routes/_auth/login.tsx)
+- Forms: [apps/web/src/components/sign-in-form.tsx](mdc:apps/web/src/components/sign-in-form.tsx), [apps/web/src/components/sign-up-form.tsx](mdc:apps/web/src/components/sign-up-form.tsx)
+
+These files currently use emerald/teal utility classes for accents. Replace with brand tokens to keep consistency across apps.
+
+### Brand palette hook (spectralNotify)
+Define brand colors via semantic tokens (no hard-coded emerald/teal), leveraging existing `--primary`, `--secondary`, and optional explicit brand namespace variables if needed.
+
+Add to `:root` in [apps/web/src/index.css](mdc:apps/web/src/index.css):
+
+```css
+/* Brand namespace (optional, to mirror SpectralChat patterns) */
+--color-brand-primary-50: oklch(0.97 0.014 254.604);
+--color-brand-primary-100: oklch(0.932 0.032 255.585);
+--color-brand-primary-200: oklch(0.882 0.059 254.128);
+--color-brand-primary-300: oklch(0.809 0.105 251.813);
+--color-brand-primary-400: oklch(0.707 0.165 254.624);
+--color-brand-primary-500: oklch(0.623 0.214 259.815);
+--color-brand-primary-600: oklch(0.546 0.245 262.881);
+--color-brand-primary-700: oklch(0.488 0.243 264.376);
+--color-brand-primary-800: oklch(0.424 0.199 265.638);
+--color-brand-primary-900: oklch(0.379 0.146 265.522);
+--color-brand-primary-950: oklch(0.282 0.091 267.935);
+--color-brand-primary: var(--color-brand-primary-600);
+--color-brand-primary-foreground: oklch(0.985 0 0);
+
+--color-brand-secondary-50: oklch(0.977 0.013 236.62);
+--color-brand-secondary-100: oklch(0.951 0.026 236.824);
+--color-brand-secondary-200: oklch(0.901 0.058 230.902);
+--color-brand-secondary-300: oklch(0.828 0.111 230.318);
+--color-brand-secondary-400: oklch(0.746 0.16 232.661);
+--color-brand-secondary-500: oklch(0.685 0.169 237.323);
+--color-brand-secondary-600: oklch(0.588 0.158 241.966);
+--color-brand-secondary-700: oklch(0.5 0.134 242.749);
+--color-brand-secondary-800: oklch(0.443 0.11 240.79);
+--color-brand-secondary-900: oklch(0.391 0.09 240.876);
+--color-brand-secondary-950: oklch(0.293 0.066 243.157);
+--color-brand-secondary: var(--color-brand-secondary-600);
+--color-brand-secondary-foreground: oklch(0.985 0 0);
+```
+
+Then alias semantic tokens (if desired) to brand:
+
+```css
+--primary: var(--color-brand-primary);
+--primary-foreground: var(--color-brand-primary-foreground);
+--secondary: oklch(from var(--color-brand-secondary) l c h / 0.15); /* subtle surfaces */
+--secondary-foreground: var(--color-brand-secondary-foreground);
+--ring: var(--color-brand-primary-400);
+```
+
+In `.dark` scope, keep contrast by lifting foreground and muting surfaces appropriately. Reuse the same brand scales; adjust `--border`, `--input` translucency as already implemented.
+
+### Required auth edits (non-breaking)
+Update emerald/teal utility classes to token-based classes:
+- In [apps/web/src/components/sign-in-form.tsx](mdc:apps/web/src/components/sign-in-form.tsx) and [apps/web/src/components/sign-up-form.tsx](mdc:apps/web/src/components/sign-up-form.tsx):
+  - Replace `focus:border-emerald-500/50 focus:ring-emerald-500/20` with `focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]`.
+  - Replace `bg-emerald-600 hover:bg-emerald-700` button styling with `bg-primary hover:bg-primary/90 text-primary-foreground` (already provided by `<AuthLoadingButton />` if it composes `Button` styles).
+  - Replace link color `text-emerald-400 hover:text-emerald-300` with `text-primary hover:text-primary/90` or `text-brand-secondary` if using secondary accent.
+  - Replace background gradient `from-emerald-400 to-teal-600` with `from-[color:var(--color-brand-primary-400)] to-[color:var(--color-brand-secondary-600)]` or semantic gradient utilities using CSS variables.
+
+### Motion & focus patterns
+- Use `motion/react` only.
+- Preserve focus ring contract: `focus-visible:ring-[3px] focus-visible:ring-ring/50` as seen in [button.tsx](mdc:apps/web/src/components/ui/button.tsx) and [index.css](mdc:apps/web/src/index.css).
+
+### Radius and surfaces
+- Interactive: `rounded-md`
+- Containers: `rounded-xl`
+- Dialogs: `rounded-lg`
+Values come from `--radius-*` in [apps/web/src/index.css](mdc:apps/web/src/index.css).
+
+### Sidebar tokens
+Use existing sidebar token set from [apps/web/src/index.css](mdc:apps/web/src/index.css). Active item styling should employ `data-[active=true]:bg-sidebar-accent` and `data-[active=true]:font-medium`.
+
+### Accessibility
+- Keep AA contrast minimum (OKLCH scales provided are suitable). Avoid `aria-hidden` on focusables, include keyboard parity on all actions.
+
+### Implementation checklist
+- [ ] Define brand scales in `:root` and `.dark`.
+- [ ] Alias semantic tokens to brand where appropriate.
+- [ ] Replace auth hard-coded emerald/teal classes with token-driven classes.
+- [ ] Verify focus-visible ring usage on inputs/buttons.
+- [ ] Smoke test light/dark and ensure contrast on text and controls.

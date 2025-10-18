@@ -1,0 +1,139 @@
+---
+description: "Automate domain-based commits with patterned messages"
+alwaysApply: false
+---
+
+# Commit by Domain with Patterned Messages
+
+## Purpose
+Automate the process of reviewing codebase changes, categorizing them by domain, and committing them using the established commit message pattern.
+
+## Workflow Steps
+
+### 1. Study Changes
+- Analyze the current working tree changes using `git status` and `git diff`
+- Review both staged and unstaged changes
+- Understand the scope and impact of each modification
+
+### 2. Categorize by Domain
+Group changes by these domain prefixes based on file paths and nature of changes:
+
+- **UI**: Frontend components, styles, layouts (`apps/web/src/components/`, `apps/native/components/`)
+- **API**: Backend routes, endpoints, API logic (`packages/api/`, `apps/server/`)
+- **DB**: Database schemas, migrations, queries (`packages/db/`)
+- **AUTH**: Authentication and authorization logic (`packages/auth/`)
+- **MODELS**: Data models and type definitions
+- **SERVICES**: Business logic and service layer
+- **CONFIG**: Configuration files, build scripts
+- **DOCS**: Documentation files (`.md`, `.mdx`)
+- **DEPS**: Dependency updates (`package.json`, `pnpm-lock.yaml`)
+- **CHORE**: Maintenance tasks, tooling, linting
+- **FIX**: Bug fixes
+- **FEAT**: New features
+
+### 3. Prepare Commit Messages
+Format: `<DOMAIN>: <Concise description>`
+
+**Rules:**
+- Start description with a verb (e.g., "Add", "Update", "Remove", "Fix", "Refactor")
+- Keep it concise and descriptive
+- Use present tense
+- No body/description paragraph needed
+- **NEVER include Claude self-promotion text or co-author tags**
+
+**Examples:**
+- ✅ `UI: Update dashboard layout and add dark mode toggle`
+- ✅ `API: Add user profile endpoint with validation`
+- ✅ `DB: Create todos table migration`
+- ✅ `DOCS: Update installation instructions`
+- ❌ `UI: updated some stuff` (not descriptive, wrong tense)
+- ❌ `Fixed bug` (missing domain prefix)
+
+### 4. Stage and Commit by Domain
+For each domain with changes:
+1. Stage relevant files: `git add <files>`
+2. Commit with formatted message: `git commit -m "<DOMAIN>: <Description>"`
+3. Verify commit was created successfully
+
+### 5. Handle Cross-Domain Changes
+If a change spans multiple domains:
+- Split the changes into separate commits by domain
+- Stage files selectively using `git add <specific-files>`
+- Commit each domain separately
+
+## Implementation Guidelines
+
+### Before Committing
+- ✅ Review all changes with `git status` and `git diff`
+- ✅ Ensure changes are properly categorized
+- ✅ Verify commit messages follow the pattern
+- ✅ Check that no unintended files are staged
+- ❌ Never commit without reviewing changes first
+- ❌ Never include debugging code or commented-out code
+- ❌ Never add Claude self-promotion text to commits
+
+### Commit Message Quality
+- Be specific about what changed
+- Mention key components or features affected
+- Use technical terms appropriately
+- Keep messages under 72 characters when possible
+
+### Example Workflow
+
+Given changes in:
+- `apps/web/src/components/ui/button.tsx`
+- `apps/web/src/components/ui/modal.tsx`
+- `packages/db/src/schema/user.ts`
+- `README.md`
+
+Execute:
+```bash
+# UI changes
+git add apps/web/src/components/ui/button.tsx apps/web/src/components/ui/modal.tsx
+git commit -m "UI: Update button and modal components with new variants"
+
+# DB changes
+git add packages/db/src/schema/user.ts
+git commit -m "DB: Add email verification fields to user schema"
+
+# Documentation
+git add README.md
+git commit -m "DOCS: Update API usage examples in README"
+```
+
+## Critical Rules
+
+### ⛔ NEVER Include in Commits
+```
+🤖 Generated with [Claude Code](https://claude.ai/code)
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### ✅ Always Follow
+- Use the domain prefix pattern consistently
+- Stage files carefully by domain
+- Review each commit before creating it
+- Keep commit messages clean and professional
+- Split cross-domain changes into separate commits
+
+## Domain Mapping Reference
+
+| Path Pattern | Domain | Example |
+|-------------|--------|---------|
+| `apps/web/src/components/**` | UI | UI components, layouts |
+| `apps/native/components/**` | UI | Native UI components |
+| `packages/api/**` | API | API routes, handlers |
+| `apps/server/**` | API | Server logic |
+| `packages/db/**` | DB | Database schemas, migrations |
+| `packages/auth/**` | AUTH | Auth logic, sessions |
+| `*.config.*` | CONFIG | Configuration files |
+| `*.md`, `*.mdx` | DOCS | Documentation |
+| `package.json` | DEPS | Dependencies |
+| `tsconfig.json` | CONFIG | TypeScript config |
+| `biome.json` | CONFIG | Linter config |
+
+## Notes
+- If unsure about domain classification, ask the user
+- Prefer multiple small commits over one large commit
+- Maintain chronological order (dependencies first, UI last)
+- Test changes before committing when possible
