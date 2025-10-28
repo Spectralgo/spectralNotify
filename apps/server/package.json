@@ -8,26 +8,29 @@
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "alchemy dev",
     "deploy": "alchemy deploy",
-    "destroy": "alchemy destroy"
+    "destroy": "alchemy destroy",
+    "counter:generate": "drizzle-kit generate --config=drizzle.config.counter.ts",
+    "counter:migrate": "./scripts/counter-migrate.sh"
   },
   "dependencies": {
-    "hono": "catalog:",
-    "@orpc/server": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "better-auth": "catalog:",
-    "dotenv": "catalog:",
-    "zod": "catalog:",
     "@spectralNotify/api": "workspace:*",
     "@spectralNotify/auth": "workspace:*",
-    "@spectralNotify/db": "workspace:*"
+    "@spectralNotify/db": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "typescript": "catalog:",
-    "tsdown": "catalog:",
-    "alchemy": "^0.70.0",
-    "wrangler": "^4.40.3",
+    "@cloudflare/workers-types": "^4.20250822.0",
     "@types/node": "^22.13.11",
-    "@cloudflare/workers-types": "^4.20250822.0"
+    "alchemy": "^0.70.0",
+    "drizzle-kit": "^0.31.5",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "wrangler": "^4.40.3"
   }
 }
