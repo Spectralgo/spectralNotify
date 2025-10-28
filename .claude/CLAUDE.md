@@ -15,6 +15,10 @@ Ultracite enforces strict type safety, accessibility standards, and consistent c
 
 ## Rules
 
+### Using dev server
+- Remember to kill processes after launching "pnpm dev" and being done with testing
+
+
 ### Accessibility (a11y)
 - Don't use `accessKey` attribute on any HTML element.
 - Don't set `aria-hidden="true"` on focusable elements.
