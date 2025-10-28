@@ -1,0 +1,926 @@
+---
+globs: *.ts,*.tsx,packages/api/src/**/*.ts,apps/web/src/**/*.ts,apps/web/src/**/*.tsx
+description: Endpoint Architecture Guide for oRPC (Router & Handler Pattern with type-safe errors, TanStack Query)
+---
+
+## Endpoint Architecture Guide: oRPC Edition
+
+Version: 1.0  
+Last Updated: 2025-01-17  
+Framework: oRPC (OpenAPI RPC)
+
+### Project Anchors (repo-specific)
+- API router composition: [packages/api/src/routers/index.ts](mdc:packages/api/src/routers/index.ts)
+- Health router example: [packages/api/src/routers/health/health.router.ts](mdc:packages/api/src/routers/health/health.router.ts)
+- Health handlers example: [packages/api/src/routers/health/health.handlers.ts](mdc:packages/api/src/routers/health/health.handlers.ts)
+
+---
+
+## Table of Contents
+
+1. Overview
+2. Core Principles
+3. Type-Safe Error Handling
+4. Architecture Pattern
+5. Type Safety Flow
+6. Implementation Guide
+7. oRPC-Specific Patterns
+8. Hono Adapter Integration
+9. TanStack Query Integration
+10. Good vs Bad Examples
+11. Migration from tRPC/JStack
+12. Testing Patterns
+
+---
+
+## Overview
+
+This guide defines the Router & Handler Pattern specifically for oRPC projects. oRPC combines the simplicity of RPC with OpenAPI standards, providing:
+
+- Type-safe error handling with `.errors()` method
+- Plain object routers (no wrapper functions needed)
+- Unified `.handler()` method for all procedure types
+- Lazy loading for optimal code splitting
+- Middleware composition with context injection
+
+### Key Benefits
+
+- ✅ Type-safe errors from server to client
+- ✅ OpenAPI-compatible API definitions
+- ✅ Simplified router syntax (plain objects)
+- ✅ Consistent handler pattern across all procedures
+- ✅ Built-in middleware system with hooks
+
+---
+
+## Core Principles
+
+### 1. Separation of Concerns
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ROUTER LAYER (Plain Object)                                 │
+│ - Input validation (Zod/Valibot/Arktype)                    │
+│ - Type-safe error definitions (.errors())                   │
+│ - Handler execution (.handler())                            │
+│ - Middleware composition (.use())                           │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ HANDLER LAYER (Separate File)                               │
+│ - Service factory (dependency injection)                    │
+│ - Pure business logic orchestration                         │
+│ - Thin wrapper around service layer                         │
+│ - Single responsibility per handler                         │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ SERVICE LAYER                                               │
+│ - Domain business logic                                     │
+│ - Data validation (business rules)                          │
+│ - Broker interactions (database, external APIs)             │
+│ - Exception handling (domain-specific)                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. Type Safety Contract
+
+Types flow unidirectionally with full error inference:
+
+```typescript
+// Database Schema (Drizzle)
+//     ↓ (InferSelectModel, InferInsertModel)
+// Model Types (Team, NewTeam, TeamUpdate)
+//     ↓ (Zod schemas from drizzle-zod)
+// Error Definitions (.errors() with Zod data schemas)
+//     ↓ (oRPC type inference)
+// Router Procedures (input/output + errors)
+//     ↓ (oRPC client inference)
+// Frontend Types (automatic with error types!)
+```
+
+---
+
+## Type-Safe Error Handling
+
+### The oRPC Error System
+
+oRPC provides two approaches to error handling:
+
+1. Normal Approach: Throw `ORPCError` directly (not recommended)
+2. Type-Safe Approach: Define errors with `.errors()` ✅ Recommended
+
+### Why Type-Safe Errors?
+
+```typescript
+// ❌ BAD: Client cannot infer error types
+throw new ORPCError('NOT_FOUND', {
+  message: 'Team not found',
+  data: { teamId: '123' }
+});
+
+// ✅ GOOD: Client gets full type safety
+throw errors.TEAM_NOT_FOUND({
+  data: { teamId: '123' }
+});
+```
+
+### Base Error Pattern
+
+Define common errors once, reuse everywhere:
+
+```typescript
+// server/procedures.ts
+import { os } from '@orpc/server';
+import { z } from 'zod';
+
+export const baseErrors = os.errors({
+  UNAUTHORIZED: { message: 'You must be authenticated to access this resource' },
+  RATE_LIMITED: { data: z.object({ retryAfter: z.number() }) },
+  SERVICE_UNAVAILABLE: { message: 'Service temporarily unavailable' },
+  INTERNAL_ERROR: { message: 'An internal error occurred' }
+});
+
+export const publicProcedure = baseErrors;
+
+export const protectedProcedure = baseErrors.middleware(async ({ next, errors, context }) => {
+  const user = context.user;
+  if (!user?.id) throw errors.UNAUTHORIZED();
+  return next({ context: { user } });
+});
+```
+
+### Domain-Specific Errors
+
+Extend base errors for each domain:
+
+```typescript
+// routers/teams/teams.router.ts
+import { z } from 'zod';
+import { protectedProcedure } from '~/server/procedures';
+import {
+  handleGetTeams,
+  handleGetTeamById,
+  handleAddTeam,
+  handleModifyTeam,
+  handleRemoveTeam
+} from './teams.handlers';
+
+const teamErrors = protectedProcedure.errors({
+  TEAM_VALIDATION_ERROR: { data: z.object({ field: z.string(), reason: z.string() }) },
+  TEAM_NOT_FOUND: {
+    message: 'The requested team does not exist',
+    data: z.object({ teamId: z.string().uuid() })
+  },
+  TEAM_NAME_CONFLICT: {
+    message: 'A team with this name already exists',
+    data: z.object({ name: z.string(), existingTeamId: z.string().uuid() })
+  },
+  TEAM_DEPENDENCY_ERROR: { message: 'Cannot complete operation due to dependency error' }
+});
+
+const teamIdSchema = z.object({ teamId: z.string().uuid('Invalid team ID') });
+const addTeamSchema = z.object({
+  name: z.string().min(1, 'Team name is required').max(255),
+  description: z.string().optional(),
+  organizationId: z.string().uuid('Invalid organization ID'),
+  color: z.string().optional()
+});
+const updateTeamSchema = z.object({
+  id: z.string().uuid('Invalid team ID'),
+  name: z.string().min(1).max(255).optional(),
+  description: z.string().optional(),
+  color: z.string().optional()
+});
+
+export const teamsRouter = {
+  getAll: teamErrors.handler(async ({ context }) => {
+    return await handleGetTeams(context.dbUrl);
+  }),
+
+  getById: teamErrors.input(teamIdSchema).handler(async ({ input, context, errors }) => {
+    const result = await handleGetTeamById(context.dbUrl, input.teamId);
+    if (!result) throw errors.TEAM_NOT_FOUND({ data: { teamId: input.teamId } });
+    return result;
+  }),
+
+  add: teamErrors.input(addTeamSchema).handler(async ({ input, context, errors }) => {
+    try {
+      return await handleAddTeam(context.dbUrl, input, context.user.id);
+    } catch (error) {
+      if (error instanceof TeamValidationException) {
+        throw errors.TEAM_VALIDATION_ERROR({ data: { field: error.field || 'unknown', reason: error.message } });
+      }
+      if (error instanceof TeamNameConflictException) {
+        throw errors.TEAM_NAME_CONFLICT({ data: { name: input.name, existingTeamId: error.existingTeamId } });
+      }
+      if (error instanceof TeamDependencyException) {
+        throw errors.TEAM_DEPENDENCY_ERROR();
+      }
+      throw error;
+    }
+  }),
+
+  update: teamErrors.input(updateTeamSchema).handler(async ({ input, context, errors }) => {
+    try {
+      return await handleModifyTeam(context.dbUrl, input, context.user.id);
+    } catch (error) {
+      if (error instanceof TeamNotFoundException) {
+        throw errors.TEAM_NOT_FOUND({ data: { teamId: input.id } });
+      }
+      if (error instanceof TeamValidationException) {
+        throw errors.TEAM_VALIDATION_ERROR({ data: { field: error.field || 'unknown', reason: error.message } });
+      }
+      throw error;
+    }
+  }),
+
+  delete: teamErrors.input(teamIdSchema).handler(async ({ input, context, errors }) => {
+    try {
+      await handleRemoveTeam(context.dbUrl, input.teamId);
+      return { success: true } as const;
+    } catch (error) {
+      if (error instanceof TeamNotFoundException) {
+        throw errors.TEAM_NOT_FOUND({ data: { teamId: input.teamId } });
+      }
+      throw error;
+    }
+  })
+};
+```
+
+### Error Mapping Helper
+
+```typescript
+function mapTeamServiceError(error: unknown, errors: typeof teamErrors) {
+  if (error instanceof TeamValidationException) {
+    throw errors.TEAM_VALIDATION_ERROR({ data: { field: error.field || 'unknown', reason: error.message } });
+  }
+  if (error instanceof TeamNotFoundException) {
+    throw errors.TEAM_NOT_FOUND({ data: { teamId: error.teamId } });
+  }
+  if (error instanceof TeamNameConflictException) {
+    throw errors.TEAM_NAME_CONFLICT({ data: { name: error.name, existingTeamId: error.existingTeamId } });
+  }
+  if (error instanceof TeamDependencyException) {
+    throw errors.TEAM_DEPENDENCY_ERROR();
+  }
+  throw error;
+}
+```
+
+---
+
+## Architecture Pattern
+
+### File Structure
+
+```
+src/server/
+├── procedures.ts              # Base errors + procedures
+├── routers/
+│   ├── index.ts               # Root router composition
+│   └── teams/
+│       ├── teams.router.ts    # Domain errors + procedures
+│       └── teams.handlers.ts  # Business logic
+└── services/
+    └── foundations/
+        └── teams/
+            ├── TeamService.ts
+            └── TeamService.Exceptions.ts
+```
+
+### Handler File (No Change from JStack Pattern)
+
+```typescript
+// routers/teams/teams.handlers.ts
+import { StorageBroker } from '~/server/brokers/storage_broker/StorageBroker';
+import { DateTimeBroker } from '~/server/brokers/date_time_broker/DateTimeBroker';
+import { LoggingBroker } from '~/server/brokers/logging_broker/LoggingBroker';
+import { TeamService } from '~/server/services/foundations/teams/TeamService';
+import type { Team, NewTeam, TeamUpdate } from '~/server/models/Team';
+
+export function getTeamService(dbUrl: string) {
+  return new TeamService(new StorageBroker(dbUrl), new DateTimeBroker(), new LoggingBroker());
+}
+
+export async function handleGetTeams(databaseUrl: string): Promise<Team[]> {
+  const service = getTeamService(databaseUrl);
+  return await service.retrieveAllTeamsAsync();
+}
+
+export async function handleGetTeamById(databaseUrl: string, teamId: string): Promise<Team | null> {
+  const service = getTeamService(databaseUrl);
+  return await service.retrieveTeamByIdAsync(teamId);
+}
+
+export async function handleAddTeam(databaseUrl: string, teamData: NewTeam, userId: string): Promise<Team> {
+  const service = getTeamService(databaseUrl);
+  return await service.addTeamAsync({ ...teamData, createdBy: userId, updatedBy: userId });
+}
+
+export async function handleModifyTeam(databaseUrl: string, teamUpdate: TeamUpdate, userId: string): Promise<Team> {
+  const service = getTeamService(databaseUrl);
+  return await service.modifyTeamAsync({ ...teamUpdate, updatedBy: userId });
+}
+
+export async function handleRemoveTeam(databaseUrl: string, teamId: string): Promise<Team> {
+  const service = getTeamService(databaseUrl);
+  return await service.removeTeamByIdAsync(teamId);
+}
+```
+
+---
+
+## Type Safety Flow
+
+### 1. Database → Model Types
+
+```typescript
+// models/Team.ts
+import { pgTable, varchar, text } from 'drizzle-orm/pg-core';
+import { type InferSelectModel, type InferInsertModel } from 'drizzle-orm';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+
+export const teamTable = pgTable('teamTable', {
+  id: varchar('id', { length: 255 }).primaryKey(),
+  organizationId: varchar('organizationId', { length: 255 }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  color: text('color').default('#6B7280')
+});
+
+export type Team = InferSelectModel<typeof teamTable>;
+export type NewTeam = InferInsertModel<typeof teamTable>;
+export type TeamUpdate = Partial<Team>;
+
+export const insertTeamSchema = createInsertSchema(teamTable, {
+  name: (schema) => schema.min(2).max(255),
+  organizationId: (schema) => schema.uuid('Invalid organization ID')
+});
+```
+
+### 2. Router Error Types → Frontend
+
+```typescript
+// Frontend usage
+import { createORPCClient } from '@orpc/client';
+import type { teamsRouter } from '~/server/routers/teams/teams.router';
+
+const client = createORPCClient<typeof teamsRouter>({ /* config */ });
+
+try {
+  await client.add({ name: 'My Team', organizationId: '...' });
+} catch (error) {
+  if (error.code === 'TEAM_VALIDATION_ERROR') {
+    console.error(error.data.field, error.data.reason);
+  }
+}
+```
+
+---
+
+## Implementation Guide
+
+### Step 1: Define Base Errors & Procedures
+
+```typescript
+import { os } from '@orpc/server';
+import { z } from 'zod';
+
+export const baseErrors = os.errors({
+  UNAUTHORIZED: { message: 'Authentication required' },
+  FORBIDDEN: { message: 'Insufficient permissions' },
+  RATE_LIMITED: { data: z.object({ retryAfter: z.number() }) },
+  SERVICE_UNAVAILABLE: { message: 'Service temporarily unavailable' },
+  INTERNAL_ERROR: { message: 'Internal server error' }
+});
+
+export const publicProcedure = baseErrors;
+export const protectedProcedure = baseErrors.middleware(async ({ next, errors, context }) => {
+  if (!context.user?.id) throw errors.UNAUTHORIZED();
+  return next({ context: { user: context.user } });
+});
+```
+
+### Step 2: Define Domain Errors & Router
+
+```typescript
+import { z } from 'zod';
+import { protectedProcedure } from '~/server/procedures';
+import { handleAddEntity } from './entities.handlers';
+
+const entityErrors = protectedProcedure.errors({
+  ENTITY_NOT_FOUND: { message: 'Entity not found', data: z.object({ entityId: z.string().uuid() }) },
+  ENTITY_VALIDATION_ERROR: { data: z.object({ field: z.string(), reason: z.string() }) }
+});
+
+const addEntitySchema = z.object({ name: z.string().min(1).max(255), description: z.string().optional() });
+
+export const entitiesRouter = {
+  add: entityErrors.input(addEntitySchema).handler(async ({ input, context, errors }) => {
+    try {
+      return await handleAddEntity(context.dbUrl, input, context.user.id);
+    } catch (error) {
+      if (error instanceof EntityValidationException) {
+        throw errors.ENTITY_VALIDATION_ERROR({ data: { field: error.field || 'unknown', reason: error.message } });
+      }
+      throw error;
+    }
+  })
+};
+```
+
+### Step 3: Compose Root Router
+
+```typescript
+import { os } from '@orpc/server';
+import { teamsRouter } from './teams/teams.router';
+import { entitiesRouter } from './entities/entities.router';
+
+export const appRouter = {
+  teams: teamsRouter,
+  entities: entitiesRouter,
+  analytics: os.lazy(() => import('./analytics/analytics.router'))
+};
+
+export type AppRouter = typeof appRouter;
+```
+
+---
+
+## oRPC-Specific Patterns
+
+### 1. Plain Object Routers
+
+```typescript
+// ✅ GOOD
+export const teamsRouter = {
+  getAll: procedure.handler(...),
+  getById: procedure.input(...).handler(...)
+};
+
+// ❌ BAD (tRPC/JStack style)
+export const teamsRouter = j.router({
+  getAll: procedure.get(...),
+  getById: procedure.input(...).get(...)
+});
+```
+
+### 2. Unified `.handler()` Method
+
+```typescript
+// ✅ GOOD
+export const teamsRouter = {
+  getAll: procedure.handler(async ({ context }) => handleGetTeams(context.dbUrl)),
+  add: procedure.input(schema).handler(async ({ input, context }) => handleAddTeam(context.dbUrl, input))
+};
+```
+
+### 3. Lazy Loading for Code Splitting
+
+```typescript
+import { os } from '@orpc/server';
+export const appRouter = {
+  teams: teamsRouter,
+  analytics: os.lazy(() => import('./analytics/analytics.router'))
+};
+```
+
+### 4. Middleware with Hooks
+
+```typescript
+const loggingMiddleware = os.middleware(async ({ next, path }) => {
+  const startTime = Date.now();
+  try {
+    const result = await next();
+    return result;
+  } catch (error) {
+    throw error;
+  }
+});
+
+const baseProcedure = os.use(loggingMiddleware);
+```
+
+### 5. Context Extension
+
+```typescript
+const authMiddleware = os.middleware(async ({ next, context, errors }) => {
+  const user = await getUserFromToken(context.token);
+  if (!user) throw errors.UNAUTHORIZED();
+  return next({ context: { user } });
+});
+```
+
+---
+
+## Hono Adapter Integration
+
+[Hono](https://honojs.dev/) is a high-performance web framework built on top of the Fetch API. oRPC provides seamless integration with Hono through the `@orpc/server/fetch` adapter.
+
+### Basic Integration
+
+```typescript
+import { Hono } from 'hono';
+import { RPCHandler } from '@orpc/server/fetch';
+import { appRouter } from './routers';
+
+const app = new Hono();
+const handler = new RPCHandler(appRouter);
+
+app.use('/rpc/*', async (c, next) => {
+  const { matched, response } = await handler.handle(c.req.raw, {
+    prefix: '/rpc',
+    context: {
+      // Provide initial context
+      dbUrl: process.env.DATABASE_URL,
+      user: c.get('user') // From auth middleware
+    }
+  });
+
+  if (matched) {
+    return c.newResponse(response.body, response);
+  }
+
+  await next();
+});
+
+export default app;
+```
+
+### Advanced: Request Body Parser Proxy
+
+If Hono middleware reads the request body before the oRPC handler processes it, you'll encounter a "body already used" error. Solve this with a proxy that intercepts body parser methods:
+
+```typescript
+const BODY_PARSER_METHODS = new Set(['arrayBuffer', 'blob', 'formData', 'json', 'text'] as const);
+
+type BodyParserMethod = typeof BODY_PARSER_METHODS extends Set<infer T> ? T : never;
+
+app.use('/rpc/*', async (c, next) => {
+  // Proxy request to use Hono's body parsers instead of native Request parsers
+  const request = new Proxy(c.req.raw, {
+    get(target, prop) {
+      if (BODY_PARSER_METHODS.has(prop as BodyParserMethod)) {
+        return () => c.req[prop as BodyParserMethod]();
+      }
+      return Reflect.get(target, prop, target);
+    }
+  });
+
+  const { matched, response } = await handler.handle(request, {
+    prefix: '/rpc',
+    context: {
+      dbUrl: process.env.DATABASE_URL,
+      user: c.get('user')
+    }
+  });
+
+  if (matched) {
+    return c.newResponse(response.body, response);
+  }
+
+  await next();
+});
+```
+
+### Context Injection with Middleware
+
+Combine Hono middleware with oRPC context for authentication:
+
+```typescript
+import { authMiddleware } from './middlewares/auth';
+
+app.use('/rpc/*', authMiddleware); // Sets c.set('user', ...)
+
+app.use('/rpc/*', async (c, next) => {
+  const { matched, response } = await handler.handle(c.req.raw, {
+    prefix: '/rpc',
+    context: {
+      dbUrl: process.env.DATABASE_URL,
+      user: c.get('user'), // Extract from Hono context
+      token: c.req.header('Authorization')
+    }
+  });
+
+  if (matched) {
+    return c.newResponse(response.body, response);
+  }
+
+  await next();
+});
+```
+
+### Multiple Handler Support
+
+You can use different oRPC handlers (RPC, OpenAPI, etc.) on the same route:
+
+```typescript
+import { RPCHandler } from '@orpc/server/fetch';
+import { OpenAPIHandler } from '@orpc/server/openapi';
+
+const rpcHandler = new RPCHandler(appRouter);
+const openAPIHandler = new OpenAPIHandler(appRouter, {
+  info: { title: 'API', version: '1.0.0' }
+});
+
+app.use('/rpc/*', async (c, next) => {
+  const { matched, response } = await rpcHandler.handle(c.req.raw, {
+    prefix: '/rpc',
+    context: { /* context */ }
+  });
+
+  if (matched) return c.newResponse(response.body, response);
+  await next();
+});
+
+app.use('/openapi/*', async (c, next) => {
+  const { matched, response } = await openAPIHandler.handle(c.req.raw, {
+    prefix: '/openapi',
+    context: { /* context */ }
+  });
+
+  if (matched) return c.newResponse(response.body, response);
+  await next();
+});
+```
+
+### Error Handling
+
+Hono's error handling works seamlessly with oRPC's type-safe errors:
+
+```typescript
+import { ORPCError } from '@orpc/server';
+
+app.onError((err, c) => {
+  if (err instanceof ORPCError) {
+    return c.json({ error: err.message, code: err.code, data: err.data }, err.status);
+  }
+  return c.json({ error: 'Internal Server Error' }, 500);
+});
+```
+
+---
+
+## TanStack Query Integration
+
+Install:
+
+```bash
+npm install @orpc/tanstack-query@latest
+```
+
+Setup client utils:
+
+```typescript
+import { createORPCClient } from '@orpc/client';
+import { RPCLink } from '@orpc/client/fetch';
+import { createTanstackQueryUtils } from '@orpc/tanstack-query';
+import type { AppRouter } from '~/server/routers';
+
+const link = new RPCLink({ url: 'http://localhost:3000/api/rpc', headers: () => ({ Authorization: `Bearer ${getToken()}` }) });
+export const client = createORPCClient<AppRouter>(link);
+export const orpc = createTanstackQueryUtils(client);
+```
+
+Query usage:
+
+```typescript
+import { useQuery } from '@tanstack/react-query';
+import { orpc } from '~/lib/orpc-client';
+
+const { data } = useQuery(
+  orpc.teams.getAll.queryOptions({ staleTime: 5 * 60 * 1000, retry: 3 })
+);
+```
+
+Mutation usage with type-safe errors:
+
+```typescript
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { orpc } from '~/lib/orpc-client';
+import { isDefinedError } from '@orpc/client';
+
+const qc = useQueryClient();
+const createTeam = useMutation(
+  orpc.teams.add.mutationOptions({
+    onSuccess: () => qc.invalidateQueries({ queryKey: orpc.teams.key() }),
+    onError: (error) => {
+      if (isDefinedError(error) && error.code === 'TEAM_VALIDATION_ERROR') {
+        // handle
+      }
+    }
+  })
+);
+```
+
+Infinite queries and key helpers are available via `.infiniteOptions()`, `.key()`, `.queryKey()`, etc.
+
+---
+
+## Good vs Bad Examples
+
+### ✅ GOOD: Type-Safe Error Router
+
+```typescript
+import { z } from 'zod';
+import { protectedProcedure } from '~/server/procedures';
+import { handleGetTeamById, handleAddTeam } from './teams.handlers';
+
+const teamErrors = protectedProcedure.errors({
+  TEAM_NOT_FOUND: { message: 'Team not found', data: z.object({ teamId: z.string().uuid() }) },
+  TEAM_VALIDATION_ERROR: { data: z.object({ field: z.string(), reason: z.string() }) }
+});
+
+const teamIdSchema = z.object({ teamId: z.string().uuid('Invalid team ID') });
+const addTeamSchema = z.object({ name: z.string().min(1, 'Team name required').max(255), organizationId: z.string().uuid('Invalid organization ID') });
+
+export const teamsRouter = {
+  getById: teamErrors.input(teamIdSchema).handler(async ({ input, context, errors }) => {
+    const result = await handleGetTeamById(context.dbUrl, input.teamId);
+    if (!result) throw errors.TEAM_NOT_FOUND({ data: { teamId: input.teamId } });
+    return result;
+  }),
+  add: teamErrors.input(addTeamSchema).handler(async ({ input, context, errors }) => {
+    try { return await handleAddTeam(context.dbUrl, input, context.user.id); }
+    catch (error) {
+      if (error instanceof TeamValidationException) {
+        throw errors.TEAM_VALIDATION_ERROR({ data: { field: error.field || 'unknown', reason: error.message } });
+      }
+      throw error;
+    }
+  })
+};
+```
+
+### ❌ BAD: Generic Error Handling
+
+```typescript
+import { ORPCError, os } from '@orpc/server';
+
+export const badRouter = {
+  getById: os.input(z.object({ id: z.string() })).handler(async ({ input }) => {
+    const result = await handleGetById(input.id);
+    if (!result) throw new ORPCError('NOT_FOUND', { message: 'Team not found', data: { id: input.id } });
+    return result;
+  })
+};
+```
+
+### ❌ BAD: Business Logic in Router
+
+```typescript
+export const badRouter = {
+  add: os.input(addTeamSchema).handler(async ({ input, context }) => {
+    const db = new Database(context.dbUrl);
+    if (input.name.includes('admin')) { throw new ORPCError('VALIDATION_ERROR', { message: 'Invalid name' }); }
+    const existing = await db.query('SELECT * FROM teams WHERE name = ?', [input.name]);
+    if (existing) throw new ORPCError('CONFLICT');
+    return await db.insert('teams', input);
+  })
+};
+```
+
+---
+
+## Migration from tRPC/JStack
+
+Key changes:
+1. Router wrapper removed: `j.router({})` → `{}`
+2. Methods unified: `.get()`, `.post()` → `.handler()`
+3. Type-safe errors: exceptions → `.errors()`
+4. Context renamed: `ctx` → `context`
+5. Direct returns: no response wrapper
+
+```typescript
+// Before (JStack)
+import { j } from '~/server/jstack';
+import { HTTPException } from 'hono/http-exception';
+
+export const teamsRouter = j.router({
+  getById: protectedProcedure.input(z.object({ id: z.string().uuid() })).get(async ({ ctx, c, input }) => {
+    try { return c.superjson(await handleGetById(ctx.dbUrl, input.id)); }
+    catch (error) { throw new HTTPException(500, { message: 'Unknown error' }); }
+  })
+});
+
+// After (oRPC)
+import { protectedProcedure } from '~/server/procedures';
+const teamErrors = protectedProcedure.errors({ TEAM_NOT_FOUND: { message: 'Team not found', data: z.object({ teamId: z.string().uuid() }) } });
+export const teamsRouter = {
+  getById: teamErrors.input(z.object({ id: z.string().uuid() })).handler(async ({ context, input, errors }) => {
+    const result = await handleGetById(context.dbUrl, input.id);
+    if (!result) throw errors.TEAM_NOT_FOUND({ data: { teamId: input.id } });
+    return result;
+  })
+};
+```
+
+---
+
+## Testing Patterns
+
+### Unit Testing Handlers
+
+```typescript
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { handleAddTeam, getTeamService } from '~/server/routers/teams/teams.handlers';
+
+vi.mock('~/server/routers/teams/teams.handlers', async () => {
+  const actual = await vi.importActual<any>('~/server/routers/teams/teams.handlers');
+  return { ...actual, getTeamService: vi.fn() };
+});
+
+describe('handleAddTeam', () => {
+  let mockTeamService: any;
+  beforeEach(() => { mockTeamService = { addTeamAsync: vi.fn() }; vi.mocked(getTeamService).mockReturnValue(mockTeamService); });
+  it('should add audit fields', async () => {
+    const teamData = { name: 'Test Team', organizationId: 'org-123' };
+    const userId = 'user-456';
+    mockTeamService.addTeamAsync.mockResolvedValue({ id: 'team-789', ...teamData, createdBy: userId, updatedBy: userId });
+    const result = await handleAddTeam('db-url', teamData, userId);
+    expect(mockTeamService.addTeamAsync).toHaveBeenCalledWith({ ...teamData, createdBy: userId, updatedBy: userId });
+    expect(result.id).toBe('team-789');
+  });
+});
+```
+
+### Testing Error Handling
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { teamsRouter } from '~/server/routers/teams/teams.router';
+
+describe('teamsRouter', () => {
+  it('throws TEAM_NOT_FOUND with correct data', async () => {
+    const mockContext = { dbUrl: 'test-db', user: { id: 'user-123' } };
+    const handler = teamsRouter.getById;
+    await expect(
+      handler({ input: { teamId: '00000000-0000-0000-0000-000000000000' }, context: mockContext })
+    ).rejects.toMatchObject({ code: 'TEAM_NOT_FOUND', data: { teamId: '00000000-0000-0000-0000-000000000000' } });
+  });
+});
+```
+
+---
+
+## Checklist: oRPC Router & Handler Pattern
+
+### Error Definitions
+- [ ] Domain errors defined with `.errors()`
+- [ ] Error data schemas use Zod
+- [ ] Messages are user-friendly
+- [ ] Sensitive data excluded from error.data
+- [ ] Common errors inherited from baseErrors
+
+### Router Layer
+- [ ] Router is plain object (no wrapper)
+- [ ] All procedures use `.handler()`
+- [ ] Input schemas with Zod/Valibot/Arktype
+- [ ] UUID fields validated
+- [ ] String fields have `.min()`/`.max()`
+- [ ] Service exceptions mapped to type-safe errors
+- [ ] No business logic in routers
+
+### Handler Layer
+- [ ] Service factory with explicit dependencies
+- [ ] Pure functions, single responsibility
+- [ ] Strong typing, no `any`
+- [ ] Audit fields added (createdBy, updatedBy)
+- [ ] Consistent naming `handle[Action][Entity]`
+
+### Type Safety
+- [ ] Model types inferred from Drizzle
+- [ ] Error data schemas with Zod
+- [ ] Frontend infers all error types
+- [ ] No manual type duplication
+
+---
+
+## Summary
+
+The oRPC Router & Handler Pattern provides:
+1. Type-Safe Errors: Full inference server→client
+2. Simplified Syntax: Plain objects, unified `.handler()`
+3. OpenAPI Compatibility: Automatic schema generation
+4. Code Splitting: Lazy loading support
+5. Consistency: Same handler layer as JStack/tRPC
+
+Golden Rule: Define errors first, route with plain objects, delegate to handlers.
+
+Key Differences from JStack/tRPC:
+- Router syntax: wrapper → plain object
+- Methods: multiple → `.handler()` only
+- Errors: exceptions → type-safe `.errors()`
+- Response: wrappers → direct return
+- Lazy loading: built-in `os.lazy()`
+
+References:
+- oRPC Docs: `https://orpc.unnoq.com/docs`
+- Error Handling: `https://orpc.unnoq.com/docs/error-handling`
+- Procedure: `https://orpc.unnoq.com/docs/procedure`
+- Router: `https://orpc.unnoq.com/docs/router`
+- Middleware: `https://orpc.unnoq.com/docs/middleware`
+- Hono Adapter: `https://orpc.unnoq.com/docs/adapters/hono`
+
