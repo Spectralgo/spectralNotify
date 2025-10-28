@@ -14,3 +14,9 @@ declare module "cloudflare:workers" {
     export interface Env extends CloudflareEnv {}
   }
 }
+
+// Declare .sql files as importable string modules
+declare module "*.sql" {
+  const content: string;
+  export default content;
+}

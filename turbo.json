@@ -25,6 +25,14 @@
       "cache": false,
       "persistent": true
     },
+    "db:studio:local": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:studio:remote": {
+      "cache": false,
+      "persistent": true
+    },
     "db:migrate": {
       "cache": false,
       "persistent": true

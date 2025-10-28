@@ -48,3 +48,9 @@ coverage
 .cache
 tmp
 temp
+
+# TanStack Router generated files
+**/routeTree.gen.ts
+
+# Drizzle Kit generated migrations (temporary)
+apps/server/src/counter-migrations/generated/

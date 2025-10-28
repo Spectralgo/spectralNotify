@@ -20,6 +20,7 @@ export default defineConfig({
     },
     watch: {
       usePolling: false,
+      ignored: ["**/routeTree.gen.ts"], // Ignore auto-generated file to prevent infinite HMR loop
     },
   },
 });

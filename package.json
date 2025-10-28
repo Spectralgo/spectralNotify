@@ -15,7 +15,12 @@
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F server dev",
     "db:push": "turbo -F @spectralNotify/db db:push",
+    "db:studio": "turbo -F @spectralNotify/db db:studio",
+    "db:studio:local": "turbo -F @spectralNotify/db db:studio:local",
+    "db:studio:remote": "turbo -F @spectralNotify/db db:studio:remote",
     "db:generate": "turbo -F @spectralNotify/db db:generate",
+    "counter:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.counter.ts",
+    "task:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.task.ts",
     "deploy": "alchemy deploy",
     "destroy": "alchemy destroy"
   },
