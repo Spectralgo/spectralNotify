@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
 import {
   Folder,
+  type LucideIcon,
   MoreHorizontal,
   Share,
   Trash2,
-  type LucideIcon,
-} from "lucide-react"
+} from "lucide-react";
 
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -23,44 +23,53 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 export function NavProjects({
   projects,
 }: {
   projects: {
-    name: string
-    url: string
-    icon: LucideIcon
-  }[]
+    name: string;
+    url: string;
+    icon: LucideIcon;
+  }[];
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <SidebarGroupLabel className="px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
         Projects
       </SidebarGroupLabel>
       <SidebarMenu className="space-y-1">
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild className="transition-colors duration-200">
-              <a href={item.url} className="focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+            <SidebarMenuButton
+              asChild
+              className="transition-colors duration-200"
+            >
+              <a
+                className="focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                href={item.url}
+              >
                 <item.icon className="h-5 w-5" />
                 <span className="text-sm">{item.name}</span>
               </a>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover className="focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                <SidebarMenuAction
+                  className="focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  showOnHover
+                >
                   <MoreHorizontal className="h-4 w-4" />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
               <DropdownMenuContent
+                align={isMobile ? "end" : "start"}
                 className="w-48"
                 side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
               >
                 <DropdownMenuItem className="gap-2">
                   <Folder className="h-4 w-4 text-muted-foreground" />
@@ -87,5 +96,5 @@ export function NavProjects({
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
-import { orpc } from "@/utils/orpc";
+import { api } from "@/utils/orpc";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: RouteComponent,
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_app/dashboard")({
 function RouteComponent() {
   const { session } = Route.useRouteContext();
 
-  const privateData = useQuery(orpc.privateData.queryOptions());
+  const privateData = useQuery(api.privateData.queryOptions());
 
   return (
     <div className="flex flex-1 flex-col gap-4">

@@ -1,48 +1,37 @@
 import { AuthQueryProvider } from "@daveyplate/better-auth-tanstack";
 import { AuthUIProviderTanstack } from "@daveyplate/better-auth-ui/tanstack";
 import { QueryClientProvider } from "@tanstack/react-query";
-import {
-  createRouter,
-  Link,
-  RouterProvider,
-  useRouter,
-} from "@tanstack/react-router";
+import { createRouter, Link, RouterProvider } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
+import { Toaster } from "sonner";
 import Loader from "./components/loader";
 import { authClient } from "./lib/auth-client";
 import { routeTree } from "./routeTree.gen";
-import { orpc, queryClient } from "./utils/orpc";
+import { api, queryClient } from "./utils/orpc";
 
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
   defaultPendingComponent: () => <Loader />,
-  context: { orpc, queryClient },
+  context: { orpc: api, queryClient },
   Wrap({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
         <AuthQueryProvider>
-          <AuthProviderWrapper>{children}</AuthProviderWrapper>
+          <AuthUIProviderTanstack
+            authClient={authClient}
+            Link={({ href, ...props }) => <Link to={href} {...props} />}
+            navigate={(href) => router.navigate({ to: href })}
+            replace={(href) => router.navigate({ to: href, replace: true })}
+          >
+            {children}
+            <Toaster />
+          </AuthUIProviderTanstack>
         </AuthQueryProvider>
       </QueryClientProvider>
     );
   },
 });
-
-function AuthProviderWrapper({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-
-  return (
-    <AuthUIProviderTanstack
-      authClient={authClient}
-      Link={({ href, ...props }) => <Link to={href} {...props} />}
-      navigate={(href) => router.navigate({ to: href })}
-      replace={(href) => router.navigate({ to: href, replace: true })}
-    >
-      {children}
-    </AuthUIProviderTanstack>
-  );
-}
 
 declare module "@tanstack/react-router" {
   interface Register {

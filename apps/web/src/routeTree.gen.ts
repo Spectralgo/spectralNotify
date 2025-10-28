@@ -9,13 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuperAdminRouteRouteImport } from './routes/super-admin/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
+import { Route as SuperAdminIndexRouteImport } from './routes/super-admin/index'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as SuperAdminApiStatusRouteImport } from './routes/super-admin/api-status'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as AppTodosRouteImport } from './routes/_app/todos'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as SuperAdminTasksRouteRouteImport } from './routes/super-admin/tasks/route'
+import { Route as SuperAdminCountersRouteRouteImport } from './routes/super-admin/counters/route'
+import { Route as AppTasksRouteRouteImport } from './routes/_app/tasks/route'
+import { Route as SuperAdminTasksIndexRouteImport } from './routes/super-admin/tasks/index'
+import { Route as SuperAdminCountersIndexRouteImport } from './routes/super-admin/counters/index'
+import { Route as AppTasksLiveRouteImport } from './routes/_app/tasks/live'
+import { Route as AppTasksFailedRouteImport } from './routes/_app/tasks/failed'
+import { Route as AppTasksCompletedRouteImport } from './routes/_app/tasks/completed'
+import { Route as AppTasksAllRouteImport } from './routes/_app/tasks/all'
 
+const SuperAdminRouteRoute = SuperAdminRouteRouteImport.update({
+  id: '/super-admin',
+  path: '/super-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -24,70 +40,196 @@ const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SuperAdminIndexRoute = SuperAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SuperAdminRouteRoute,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const SuperAdminApiStatusRoute = SuperAdminApiStatusRouteImport.update({
+  id: '/api-status',
+  path: '/api-status',
+  getParentRoute: () => SuperAdminRouteRoute,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const AppTodosRoute = AppTodosRouteImport.update({
-  id: '/todos',
-  path: '/todos',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const SuperAdminTasksRouteRoute = SuperAdminTasksRouteRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => SuperAdminRouteRoute,
+} as any)
+const SuperAdminCountersRouteRoute = SuperAdminCountersRouteRouteImport.update({
+  id: '/counters',
+  path: '/counters',
+  getParentRoute: () => SuperAdminRouteRoute,
+} as any)
+const AppTasksRouteRoute = AppTasksRouteRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const SuperAdminTasksIndexRoute = SuperAdminTasksIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SuperAdminTasksRouteRoute,
+} as any)
+const SuperAdminCountersIndexRoute = SuperAdminCountersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SuperAdminCountersRouteRoute,
+} as any)
+const AppTasksLiveRoute = AppTasksLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => AppTasksRouteRoute,
+} as any)
+const AppTasksFailedRoute = AppTasksFailedRouteImport.update({
+  id: '/failed',
+  path: '/failed',
+  getParentRoute: () => AppTasksRouteRoute,
+} as any)
+const AppTasksCompletedRoute = AppTasksCompletedRouteImport.update({
+  id: '/completed',
+  path: '/completed',
+  getParentRoute: () => AppTasksRouteRoute,
+} as any)
+const AppTasksAllRoute = AppTasksAllRouteImport.update({
+  id: '/all',
+  path: '/all',
+  getParentRoute: () => AppTasksRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
+  '/super-admin': typeof SuperAdminRouteRouteWithChildren
+  '/tasks': typeof AppTasksRouteRouteWithChildren
+  '/super-admin/counters': typeof SuperAdminCountersRouteRouteWithChildren
+  '/super-admin/tasks': typeof SuperAdminTasksRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
-  '/todos': typeof AppTodosRoute
   '/login': typeof AuthLoginRoute
+  '/super-admin/api-status': typeof SuperAdminApiStatusRoute
   '/': typeof AppIndexRoute
+  '/super-admin/': typeof SuperAdminIndexRoute
+  '/tasks/all': typeof AppTasksAllRoute
+  '/tasks/completed': typeof AppTasksCompletedRoute
+  '/tasks/failed': typeof AppTasksFailedRoute
+  '/tasks/live': typeof AppTasksLiveRoute
+  '/super-admin/counters/': typeof SuperAdminCountersIndexRoute
+  '/super-admin/tasks/': typeof SuperAdminTasksIndexRoute
 }
 export interface FileRoutesByTo {
+  '/tasks': typeof AppTasksRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
-  '/todos': typeof AppTodosRoute
   '/login': typeof AuthLoginRoute
+  '/super-admin/api-status': typeof SuperAdminApiStatusRoute
   '/': typeof AppIndexRoute
+  '/super-admin': typeof SuperAdminIndexRoute
+  '/tasks/all': typeof AppTasksAllRoute
+  '/tasks/completed': typeof AppTasksCompletedRoute
+  '/tasks/failed': typeof AppTasksFailedRoute
+  '/tasks/live': typeof AppTasksLiveRoute
+  '/super-admin/counters': typeof SuperAdminCountersIndexRoute
+  '/super-admin/tasks': typeof SuperAdminTasksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteRouteWithChildren
   '/_auth': typeof AuthRouteRouteWithChildren
+  '/super-admin': typeof SuperAdminRouteRouteWithChildren
+  '/_app/tasks': typeof AppTasksRouteRouteWithChildren
+  '/super-admin/counters': typeof SuperAdminCountersRouteRouteWithChildren
+  '/super-admin/tasks': typeof SuperAdminTasksRouteRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/todos': typeof AppTodosRoute
   '/_auth/login': typeof AuthLoginRoute
+  '/super-admin/api-status': typeof SuperAdminApiStatusRoute
   '/_app/': typeof AppIndexRoute
+  '/super-admin/': typeof SuperAdminIndexRoute
+  '/_app/tasks/all': typeof AppTasksAllRoute
+  '/_app/tasks/completed': typeof AppTasksCompletedRoute
+  '/_app/tasks/failed': typeof AppTasksFailedRoute
+  '/_app/tasks/live': typeof AppTasksLiveRoute
+  '/super-admin/counters/': typeof SuperAdminCountersIndexRoute
+  '/super-admin/tasks/': typeof SuperAdminTasksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/dashboard' | '/todos' | '/login' | '/'
+  fullPaths:
+    | '/super-admin'
+    | '/tasks'
+    | '/super-admin/counters'
+    | '/super-admin/tasks'
+    | '/dashboard'
+    | '/login'
+    | '/super-admin/api-status'
+    | '/'
+    | '/super-admin/'
+    | '/tasks/all'
+    | '/tasks/completed'
+    | '/tasks/failed'
+    | '/tasks/live'
+    | '/super-admin/counters/'
+    | '/super-admin/tasks/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/dashboard' | '/todos' | '/login' | '/'
+  to:
+    | '/tasks'
+    | '/dashboard'
+    | '/login'
+    | '/super-admin/api-status'
+    | '/'
+    | '/super-admin'
+    | '/tasks/all'
+    | '/tasks/completed'
+    | '/tasks/failed'
+    | '/tasks/live'
+    | '/super-admin/counters'
+    | '/super-admin/tasks'
   id:
     | '__root__'
     | '/_app'
     | '/_auth'
+    | '/super-admin'
+    | '/_app/tasks'
+    | '/super-admin/counters'
+    | '/super-admin/tasks'
     | '/_app/dashboard'
-    | '/_app/todos'
     | '/_auth/login'
+    | '/super-admin/api-status'
     | '/_app/'
+    | '/super-admin/'
+    | '/_app/tasks/all'
+    | '/_app/tasks/completed'
+    | '/_app/tasks/failed'
+    | '/_app/tasks/live'
+    | '/super-admin/counters/'
+    | '/super-admin/tasks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRouteRoute: typeof AppRouteRouteWithChildren
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
+  SuperAdminRouteRoute: typeof SuperAdminRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/super-admin': {
+      id: '/super-admin'
+      path: '/super-admin'
+      fullPath: '/super-admin'
+      preLoaderRoute: typeof SuperAdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -102,12 +244,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/super-admin/': {
+      id: '/super-admin/'
+      path: '/'
+      fullPath: '/super-admin/'
+      preLoaderRoute: typeof SuperAdminIndexRouteImport
+      parentRoute: typeof SuperAdminRouteRoute
+    }
     '/_app/': {
       id: '/_app/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRouteRoute
+    }
+    '/super-admin/api-status': {
+      id: '/super-admin/api-status'
+      path: '/api-status'
+      fullPath: '/super-admin/api-status'
+      preLoaderRoute: typeof SuperAdminApiStatusRouteImport
+      parentRoute: typeof SuperAdminRouteRoute
     }
     '/_auth/login': {
       id: '/_auth/login'
@@ -116,13 +272,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_app/todos': {
-      id: '/_app/todos'
-      path: '/todos'
-      fullPath: '/todos'
-      preLoaderRoute: typeof AppTodosRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -130,18 +279,99 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/super-admin/tasks': {
+      id: '/super-admin/tasks'
+      path: '/tasks'
+      fullPath: '/super-admin/tasks'
+      preLoaderRoute: typeof SuperAdminTasksRouteRouteImport
+      parentRoute: typeof SuperAdminRouteRoute
+    }
+    '/super-admin/counters': {
+      id: '/super-admin/counters'
+      path: '/counters'
+      fullPath: '/super-admin/counters'
+      preLoaderRoute: typeof SuperAdminCountersRouteRouteImport
+      parentRoute: typeof SuperAdminRouteRoute
+    }
+    '/_app/tasks': {
+      id: '/_app/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AppTasksRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/super-admin/tasks/': {
+      id: '/super-admin/tasks/'
+      path: '/'
+      fullPath: '/super-admin/tasks/'
+      preLoaderRoute: typeof SuperAdminTasksIndexRouteImport
+      parentRoute: typeof SuperAdminTasksRouteRoute
+    }
+    '/super-admin/counters/': {
+      id: '/super-admin/counters/'
+      path: '/'
+      fullPath: '/super-admin/counters/'
+      preLoaderRoute: typeof SuperAdminCountersIndexRouteImport
+      parentRoute: typeof SuperAdminCountersRouteRoute
+    }
+    '/_app/tasks/live': {
+      id: '/_app/tasks/live'
+      path: '/live'
+      fullPath: '/tasks/live'
+      preLoaderRoute: typeof AppTasksLiveRouteImport
+      parentRoute: typeof AppTasksRouteRoute
+    }
+    '/_app/tasks/failed': {
+      id: '/_app/tasks/failed'
+      path: '/failed'
+      fullPath: '/tasks/failed'
+      preLoaderRoute: typeof AppTasksFailedRouteImport
+      parentRoute: typeof AppTasksRouteRoute
+    }
+    '/_app/tasks/completed': {
+      id: '/_app/tasks/completed'
+      path: '/completed'
+      fullPath: '/tasks/completed'
+      preLoaderRoute: typeof AppTasksCompletedRouteImport
+      parentRoute: typeof AppTasksRouteRoute
+    }
+    '/_app/tasks/all': {
+      id: '/_app/tasks/all'
+      path: '/all'
+      fullPath: '/tasks/all'
+      preLoaderRoute: typeof AppTasksAllRouteImport
+      parentRoute: typeof AppTasksRouteRoute
+    }
   }
 }
 
+interface AppTasksRouteRouteChildren {
+  AppTasksAllRoute: typeof AppTasksAllRoute
+  AppTasksCompletedRoute: typeof AppTasksCompletedRoute
+  AppTasksFailedRoute: typeof AppTasksFailedRoute
+  AppTasksLiveRoute: typeof AppTasksLiveRoute
+}
+
+const AppTasksRouteRouteChildren: AppTasksRouteRouteChildren = {
+  AppTasksAllRoute: AppTasksAllRoute,
+  AppTasksCompletedRoute: AppTasksCompletedRoute,
+  AppTasksFailedRoute: AppTasksFailedRoute,
+  AppTasksLiveRoute: AppTasksLiveRoute,
+}
+
+const AppTasksRouteRouteWithChildren = AppTasksRouteRoute._addFileChildren(
+  AppTasksRouteRouteChildren,
+)
+
 interface AppRouteRouteChildren {
+  AppTasksRouteRoute: typeof AppTasksRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
-  AppTodosRoute: typeof AppTodosRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppTasksRouteRoute: AppTasksRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
-  AppTodosRoute: AppTodosRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
@@ -161,9 +391,53 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface SuperAdminCountersRouteRouteChildren {
+  SuperAdminCountersIndexRoute: typeof SuperAdminCountersIndexRoute
+}
+
+const SuperAdminCountersRouteRouteChildren: SuperAdminCountersRouteRouteChildren =
+  {
+    SuperAdminCountersIndexRoute: SuperAdminCountersIndexRoute,
+  }
+
+const SuperAdminCountersRouteRouteWithChildren =
+  SuperAdminCountersRouteRoute._addFileChildren(
+    SuperAdminCountersRouteRouteChildren,
+  )
+
+interface SuperAdminTasksRouteRouteChildren {
+  SuperAdminTasksIndexRoute: typeof SuperAdminTasksIndexRoute
+}
+
+const SuperAdminTasksRouteRouteChildren: SuperAdminTasksRouteRouteChildren = {
+  SuperAdminTasksIndexRoute: SuperAdminTasksIndexRoute,
+}
+
+const SuperAdminTasksRouteRouteWithChildren =
+  SuperAdminTasksRouteRoute._addFileChildren(SuperAdminTasksRouteRouteChildren)
+
+interface SuperAdminRouteRouteChildren {
+  SuperAdminCountersRouteRoute: typeof SuperAdminCountersRouteRouteWithChildren
+  SuperAdminTasksRouteRoute: typeof SuperAdminTasksRouteRouteWithChildren
+  SuperAdminApiStatusRoute: typeof SuperAdminApiStatusRoute
+  SuperAdminIndexRoute: typeof SuperAdminIndexRoute
+}
+
+const SuperAdminRouteRouteChildren: SuperAdminRouteRouteChildren = {
+  SuperAdminCountersRouteRoute: SuperAdminCountersRouteRouteWithChildren,
+  SuperAdminTasksRouteRoute: SuperAdminTasksRouteRouteWithChildren,
+  SuperAdminApiStatusRoute: SuperAdminApiStatusRoute,
+  SuperAdminIndexRoute: SuperAdminIndexRoute,
+}
+
+const SuperAdminRouteRouteWithChildren = SuperAdminRouteRoute._addFileChildren(
+  SuperAdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   AppRouteRoute: AppRouteRouteWithChildren,
   AuthRouteRoute: AuthRouteRouteWithChildren,
+  SuperAdminRouteRoute: SuperAdminRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

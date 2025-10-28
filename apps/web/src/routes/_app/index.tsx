@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { orpc } from "@/utils/orpc";
+import { api } from "@/utils/orpc";
 
 export const Route = createFileRoute("/_app/")({
   component: HomeComponent,
@@ -23,7 +23,7 @@ const TITLE_TEXT = `
  `;
 
 function HomeComponent() {
-  const healthCheck = useQuery(orpc.healthCheck.queryOptions());
+  const healthCheck = useQuery(api.healthCheck.queryOptions());
 
   return (
     <div className="flex flex-1 flex-col gap-4">

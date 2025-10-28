@@ -14,11 +14,11 @@ import { useState } from "react";
 import Loader from "@/components/loader";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { link, type orpc } from "@/utils/orpc";
+import { type api, link } from "@/utils/orpc";
 import "../index.css";
 
 export interface RouterAppContext {
-  orpc: typeof orpc;
+  orpc: typeof api;
   queryClient: QueryClient;
 }
 
@@ -57,8 +57,8 @@ function RootComponent() {
       <ThemeProvider
         attribute="class"
         defaultTheme="dark"
-        enableSystem
         disableTransitionOnChange
+        enableSystem
         storageKey="vite-ui-theme"
       >
         {isFetching ? <Loader /> : <Outlet />}
