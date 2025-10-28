@@ -11,4 +11,9 @@ export default defineConfig({
   // DOCS: https://orm.drizzle.team/docs/guides/d1-http-with-drizzle-kit
   dialect: "sqlite",
   driver: "d1-http",
+  dbCredentials: {
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+    databaseId: process.env.DATABASE_ID!,
+    token: process.env.CLOUDFLARE_READ_API_TOKEN!,
+  },
 });
