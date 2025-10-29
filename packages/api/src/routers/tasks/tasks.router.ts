@@ -6,6 +6,7 @@ import {
   withIdempotency,
 } from "../../index";
 import { withIdempotency as withIdempotencySchema } from "../../schemas/idempotency";
+import { notifyMetadataSchema } from "../../types/metadata";
 import {
   handleAddEvent,
   handleCancelTask,
@@ -47,7 +48,7 @@ const createTaskSchema = z.object({
   id: z.string().min(1),
   status: z.enum(["pending", "in-progress", "success", "failed", "canceled"]),
   progress: z.number().min(0).max(100).optional(),
-  metadata: z.record(z.string(), z.unknown()),
+  metadata: notifyMetadataSchema,
 });
 
 // Align with client NotifyBroker: tasks.addEvent({ taskId, event: { type, message, progress?, metadata? }})
@@ -57,7 +58,7 @@ const addEventSchema = z.object({
     type: z.enum(["log", "progress", "error", "success"]),
     message: z.string(),
     progress: z.number().min(0).max(100).optional(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
+    metadata: notifyMetadataSchema.optional(),
   }),
 });
 
@@ -68,13 +69,13 @@ const updateProgressSchema = z.object({
 
 const taskMetadataSchema = z.object({
   taskId: z.string().min(1),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: notifyMetadataSchema.optional(),
 });
 
 const failTaskSchema = z.object({
   taskId: z.string().min(1),
   error: z.string(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: notifyMetadataSchema.optional(),
 });
 
 const historySchema = z.object({

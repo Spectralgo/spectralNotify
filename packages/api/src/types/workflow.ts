@@ -1,3 +1,5 @@
+import type { NotifyMetadata } from "./metadata";
+
 // 5-state model matching Task (1:1 mapping)
 export type WorkflowStatus =
   | "pending"
@@ -56,6 +58,22 @@ export interface WorkflowHistory {
   timestamp: string;
   metadata: string | null; // JSON string
 }
+
+/**
+ * Helper type: WorkflowMetadata with parsed metadata field
+ * Use this in API surfaces where metadata has been parsed from JSON
+ */
+export type ParsedWorkflowMetadata = Omit<WorkflowMetadata, "metadata"> & {
+  parsedMetadata?: NotifyMetadata;
+};
+
+/**
+ * Helper type: WorkflowHistory with parsed metadata field
+ * Use this in API surfaces where metadata has been parsed from JSON
+ */
+export type ParsedWorkflowHistory = Omit<WorkflowHistory, "metadata"> & {
+  parsedMetadata?: NotifyMetadata;
+};
 
 /**
  * WebSocket event types for real-time workflow updates

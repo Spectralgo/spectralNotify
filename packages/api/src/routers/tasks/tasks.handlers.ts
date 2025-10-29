@@ -1,4 +1,6 @@
 import type { TaskHistory, TaskMetadata } from "../../types/task";
+import type { NotifyMetadata } from "../../types/metadata";
+import { createSystemAuthor } from "../../types/metadata";
 
 interface TaskBinding {
   idFromName(taskId: string): DurableObjectId;
@@ -16,24 +18,24 @@ interface TaskStub {
     taskId: string;
     status: string;
     progress?: number;
-    metadata: Record<string, unknown>;
+    metadata: NotifyMetadata;
   }): Promise<void>;
   getTask(): Promise<TaskMetadata>;
   addEvent(event: {
     eventType: string;
     message: string;
     progress?: number;
-    metadata?: Record<string, unknown>;
+    metadata?: NotifyMetadata;
   }): Promise<EnrichedTaskResponse>;
   updateProgress(progress: number): Promise<EnrichedTaskResponse>;
   completeTask(
-    metadata?: Record<string, unknown>
+    metadata?: NotifyMetadata
   ): Promise<EnrichedTaskResponse>;
   failTask(
     error: string,
-    metadata?: Record<string, unknown>
+    metadata?: NotifyMetadata
   ): Promise<EnrichedTaskResponse>;
-  cancelTask(metadata?: Record<string, unknown>): Promise<EnrichedTaskResponse>;
+  cancelTask(metadata?: NotifyMetadata): Promise<EnrichedTaskResponse>;
   getHistory(limit?: number): Promise<TaskHistory[]>;
   deleteTask(): Promise<void>;
 }
@@ -48,6 +50,7 @@ function getTaskStub(taskBinding: TaskBinding, taskId: string): TaskStub {
 
 /**
  * Initialize a new task
+ * Auto-populates system author if not provided
  */
 export async function handleInitializeTask(
   taskBinding: TaskBinding,
@@ -55,7 +58,7 @@ export async function handleInitializeTask(
     taskId: string;
     status: string;
     progress?: number;
-    metadata: Record<string, unknown>;
+    metadata: NotifyMetadata;
   }
 ): Promise<void> {
   const receiveTime = Date.now();
@@ -65,8 +68,17 @@ export async function handleInitializeTask(
     `[TaskHandler] 📥 RECEIVE Task Create | taskId=${input.taskId} | status=${input.status} | timestamp=${timestamp}`
   );
 
+  // Auto-populate system author if not provided
+  const enrichedMetadata: NotifyMetadata = {
+    ...input.metadata,
+    author: input.metadata.author ?? createSystemAuthor(),
+  };
+
   const stub = getTaskStub(taskBinding, input.taskId);
-  await stub.initialize(input);
+  await stub.initialize({
+    ...input,
+    metadata: enrichedMetadata,
+  });
 
   const duration = Date.now() - receiveTime;
   console.log(
@@ -96,7 +108,7 @@ export async function handleAddEvent(
     eventType: string;
     message: string;
     progress?: number;
-    metadata?: Record<string, unknown>;
+    metadata?: NotifyMetadata;
   }
 ): Promise<EnrichedTaskResponse> {
   const stub = getTaskStub(taskBinding, taskId);
@@ -137,7 +149,7 @@ export async function handleUpdateProgress(
 export async function handleCompleteTask(
   taskBinding: TaskBinding,
   taskId: string,
-  metadata?: Record<string, unknown>
+  metadata?: NotifyMetadata
 ): Promise<EnrichedTaskResponse> {
   const stub = getTaskStub(taskBinding, taskId);
   return await stub.completeTask(metadata);
@@ -151,7 +163,7 @@ export async function handleFailTask(
   taskBinding: TaskBinding,
   taskId: string,
   error: string,
-  metadata?: Record<string, unknown>
+  metadata?: NotifyMetadata
 ): Promise<EnrichedTaskResponse> {
   const stub = getTaskStub(taskBinding, taskId);
   return await stub.failTask(error, metadata);
@@ -164,7 +176,7 @@ export async function handleFailTask(
 export async function handleCancelTask(
   taskBinding: TaskBinding,
   taskId: string,
-  metadata?: Record<string, unknown>
+  metadata?: NotifyMetadata
 ): Promise<EnrichedTaskResponse> {
   const stub = getTaskStub(taskBinding, taskId);
   return await stub.cancelTask(metadata);

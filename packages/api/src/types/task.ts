@@ -1,3 +1,5 @@
+import type { NotifyMetadata } from "./metadata";
+
 // 5-state model matching DownloadTask (1:1 mapping)
 export type TaskStatus =
   | "pending"
@@ -31,6 +33,22 @@ export interface TaskHistory {
   timestamp: string;
   metadata: string | null; // JSON string
 }
+
+/**
+ * Helper type: TaskMetadata with parsed metadata field
+ * Use this in API surfaces where metadata has been parsed from JSON
+ */
+export type ParsedTaskMetadata = Omit<TaskMetadata, "metadata"> & {
+  parsedMetadata?: NotifyMetadata;
+};
+
+/**
+ * Helper type: TaskHistory with parsed metadata field
+ * Use this in API surfaces where metadata has been parsed from JSON
+ */
+export type ParsedTaskHistory = Omit<TaskHistory, "metadata"> & {
+  parsedMetadata?: NotifyMetadata;
+};
 
 // Deprecated types (kept for backward compatibility)
 export interface TaskEvent {

@@ -6,6 +6,7 @@ import {
   withIdempotency,
 } from "../../index";
 import { withIdempotency as withIdempotencySchema } from "../../schemas/idempotency";
+import { notifyMetadataSchema } from "../../types/metadata";
 import {
   handleCancelWorkflow,
   handleCompletePhase,
@@ -74,31 +75,31 @@ const createWorkflowSchema = z.object({
       },
       { message: "Phase weights must sum to 1.0" }
     ),
-  metadata: z.record(z.string(), z.unknown()),
+  metadata: notifyMetadataSchema,
 });
 
 const updatePhaseProgressSchema = z.object({
   workflowId: z.string().min(1),
   phase: z.string().min(1),
   progress: z.number().min(0).max(100),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: notifyMetadataSchema.optional(),
 });
 
 const completePhaseSchema = z.object({
   workflowId: z.string().min(1),
   phase: z.string().min(1),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: notifyMetadataSchema.optional(),
 });
 
 const workflowMetadataSchema = z.object({
   workflowId: z.string().min(1),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: notifyMetadataSchema.optional(),
 });
 
 const failWorkflowSchema = z.object({
   workflowId: z.string().min(1),
   error: z.string(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: notifyMetadataSchema.optional(),
 });
 
 const historySchema = z.object({

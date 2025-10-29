@@ -31,3 +31,18 @@ export { withIdempotency } from "./middleware/idempotency";
 
 // Types
 export type { IdempotencyMetadata, MutationResponse } from "./types/responses";
+export type {
+  NotifyMetadata,
+  AuthorInfo,
+  OriginInfo,
+  PurposeInfo,
+} from "./types/metadata";
+export {
+  notifyMetadataSchema,
+  authorInfoSchema,
+  originInfoSchema,
+  purposeInfoSchema,
+  createSystemAuthor,
+  createDefaultOrigin,
+  parseNotifyMetadata,
+} from "./types/metadata";

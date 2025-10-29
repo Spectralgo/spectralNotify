@@ -3,6 +3,8 @@ import type {
   WorkflowMetadata,
   WorkflowPhase,
 } from "../../types/workflow";
+import type { NotifyMetadata } from "../../types/metadata";
+import { createSystemAuthor } from "../../types/metadata";
 
 interface WorkflowBinding {
   idFromName(workflowId: string): DurableObjectId;
@@ -20,28 +22,28 @@ interface WorkflowStub {
     workflowId: string;
     status: string;
     phases: WorkflowPhase[];
-    metadata: Record<string, unknown>;
+    metadata: NotifyMetadata;
   }): Promise<void>;
   getWorkflow(): Promise<WorkflowMetadata>;
   getPhases(): Promise<WorkflowPhase[]>;
   updatePhaseProgress(
     phaseKey: string,
     progress: number,
-    metadata?: Record<string, unknown>
+    metadata?: NotifyMetadata
   ): Promise<EnrichedWorkflowResponse>;
   completePhase(
     phaseKey: string,
-    metadata?: Record<string, unknown>
+    metadata?: NotifyMetadata
   ): Promise<EnrichedWorkflowResponse>;
   completeWorkflow(
-    metadata?: Record<string, unknown>
+    metadata?: NotifyMetadata
   ): Promise<EnrichedWorkflowResponse>;
   failWorkflow(
     error: string,
-    metadata?: Record<string, unknown>
+    metadata?: NotifyMetadata
   ): Promise<EnrichedWorkflowResponse>;
   cancelWorkflow(
-    metadata?: Record<string, unknown>
+    metadata?: NotifyMetadata
   ): Promise<EnrichedWorkflowResponse>;
   getHistory(limit?: number): Promise<WorkflowHistory[]>;
   deleteWorkflow(): Promise<void>;
@@ -60,6 +62,7 @@ function getWorkflowStub(
 
 /**
  * Initialize a new workflow
+ * Auto-populates system author if not provided
  */
 export async function handleInitializeWorkflow(
   workflowBinding: WorkflowBinding,
@@ -67,7 +70,7 @@ export async function handleInitializeWorkflow(
     workflowId: string;
     status: string;
     phases: WorkflowPhase[];
-    metadata: Record<string, unknown>;
+    metadata: NotifyMetadata;
   }
 ): Promise<void> {
   const receiveTime = Date.now();
@@ -77,8 +80,17 @@ export async function handleInitializeWorkflow(
     `[WorkflowHandler] 📥 RECEIVE Workflow Create | workflowId=${input.workflowId} | status=${input.status} | timestamp=${timestamp}`
   );
 
+  // Auto-populate system author if not provided
+  const enrichedMetadata: NotifyMetadata = {
+    ...input.metadata,
+    author: input.metadata.author ?? createSystemAuthor(),
+  };
+
   const stub = getWorkflowStub(workflowBinding, input.workflowId);
-  await stub.initialize(input);
+  await stub.initialize({
+    ...input,
+    metadata: enrichedMetadata,
+  });
 
   const duration = Date.now() - receiveTime;
   console.log(
@@ -117,7 +129,7 @@ export async function handleUpdatePhaseProgress(
   workflowId: string,
   phaseKey: string,
   progress: number,
-  metadata?: Record<string, unknown>
+  metadata?: NotifyMetadata
 ): Promise<EnrichedWorkflowResponse> {
   const receiveTime = Date.now();
   const timestamp = new Date().toISOString();
@@ -145,7 +157,7 @@ export async function handleCompletePhase(
   workflowBinding: WorkflowBinding,
   workflowId: string,
   phaseKey: string,
-  metadata?: Record<string, unknown>
+  metadata?: NotifyMetadata
 ): Promise<EnrichedWorkflowResponse> {
   const stub = getWorkflowStub(workflowBinding, workflowId);
   return await stub.completePhase(phaseKey, metadata);
@@ -158,7 +170,7 @@ export async function handleCompletePhase(
 export async function handleCompleteWorkflow(
   workflowBinding: WorkflowBinding,
   workflowId: string,
-  metadata?: Record<string, unknown>
+  metadata?: NotifyMetadata
 ): Promise<EnrichedWorkflowResponse> {
   const stub = getWorkflowStub(workflowBinding, workflowId);
   return await stub.completeWorkflow(metadata);
@@ -172,7 +184,7 @@ export async function handleFailWorkflow(
   workflowBinding: WorkflowBinding,
   workflowId: string,
   error: string,
-  metadata?: Record<string, unknown>
+  metadata?: NotifyMetadata
 ): Promise<EnrichedWorkflowResponse> {
   const stub = getWorkflowStub(workflowBinding, workflowId);
   return await stub.failWorkflow(error, metadata);
@@ -185,7 +197,7 @@ export async function handleFailWorkflow(
 export async function handleCancelWorkflow(
   workflowBinding: WorkflowBinding,
   workflowId: string,
-  metadata?: Record<string, unknown>
+  metadata?: NotifyMetadata
 ): Promise<EnrichedWorkflowResponse> {
   const stub = getWorkflowStub(workflowBinding, workflowId);
   return await stub.cancelWorkflow(metadata);
