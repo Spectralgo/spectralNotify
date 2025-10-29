@@ -12,6 +12,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useNavigate } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,21 +31,63 @@ import { cn } from "@/lib/utils";
 export function SidebarUserButton() {
   const { theme, setTheme } = useTheme();
   const { data: session, isPending } = authClient.useSession();
+  const navigate = useNavigate();
   const user = session?.user;
-
-  if (isPending || !user) return null;
 
   // Get user initials for avatar fallback
   const initials =
-    user.name
+    user?.name
       ?.split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase() ?? "?";
 
-  const handleSignOut = async () => {
-    await authClient.signOut();
+  const handleSignOut = () => {
+    navigate({ to: "/sign-out" });
   };
+
+  // Show loading state
+  if (isPending) {
+    return (
+      <div className="flex h-12 w-full animate-pulse items-center gap-3 rounded-md bg-sidebar-accent/50 px-3 py-2">
+        <div className="h-8 w-8 rounded-full bg-sidebar-accent" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-24 rounded bg-sidebar-accent" />
+          <div className="h-2 w-32 rounded bg-sidebar-accent" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show sign-in button when not authenticated
+  if (!user) {
+    return (
+      <Button
+        className={cn(
+          "h-auto w-full justify-start gap-3 px-3 py-2",
+          "hover:bg-sidebar-accent",
+          "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+          "transition-colors duration-200"
+        )}
+        onClick={() => {
+          window.location.href = "/login";
+        }}
+        variant="ghost"
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/50 bg-sidebar-accent">
+          <UserIcon className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <div className="flex flex-1 flex-col items-start text-left">
+          <span className="font-medium text-sidebar-foreground text-sm">
+            Sign In
+          </span>
+          <span className="text-muted-foreground text-xs">
+            Access your account
+          </span>
+        </div>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>
