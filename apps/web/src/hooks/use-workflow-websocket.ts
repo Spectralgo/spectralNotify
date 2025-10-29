@@ -1,16 +1,16 @@
-import type { TaskUpdateEvent } from "@spectralNotify/api/types/task";
+import type { WorkflowUpdateEvent } from "@spectralNotify/api/types/workflow";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/utils/orpc";
 import {
   closeWebSocket,
-  createTaskWebSocket,
+  createWorkflowWebSocket,
   sendPing,
-} from "@/utils/websocket-task";
+} from "@/utils/websocket-workflow";
 
-interface UseTaskWebSocketOptions {
+interface UseWorkflowWebSocketOptions {
   enabled?: boolean;
-  onUpdate?: (event: TaskUpdateEvent) => void;
+  onUpdate?: (event: WorkflowUpdateEvent) => void;
   reconnectInterval?: number;
   pingInterval?: number;
 }
@@ -23,12 +23,12 @@ interface ConnectionState {
 }
 
 /**
- * Hook to establish a WebSocket connection to a specific task
- * Automatically updates TanStack Query cache when task updates are received
+ * Hook to establish a WebSocket connection to a specific workflow
+ * Automatically updates TanStack Query cache when workflow updates are received
  */
-export function useTaskWebSocket(
-  taskId: string | undefined,
-  options: UseTaskWebSocketOptions = {}
+export function useWorkflowWebSocket(
+  workflowId: string | undefined,
+  options: UseWorkflowWebSocketOptions = {}
 ) {
   const {
     enabled = true,
@@ -52,29 +52,29 @@ export function useTaskWebSocket(
   });
 
   // Function to update query cache based on WebSocket event
-  const updateQueryCache = (event: TaskUpdateEvent) => {
+  const updateQueryCache = (event: WorkflowUpdateEvent) => {
     const receiveTime = Date.now();
     const receiveTimestamp = new Date().toISOString();
 
     console.log(
-      `[WebSocket] 📥 RECEIVE Message | taskId=${taskId} | type=${event.type} | serverTimestamp=${event.timestamp} | receiveTimestamp=${receiveTimestamp}`
+      `[WorkflowWebSocket] 📥 RECEIVE Message | workflowId=${workflowId} | type=${event.type} | serverTimestamp=${event.timestamp} | receiveTimestamp=${receiveTimestamp}`
     );
 
-    if (!taskId) return;
+    if (!workflowId) return;
 
-    const taskQueryKey = api.tasks.getById.queryOptions({
-      input: { taskId },
+    const workflowQueryKey = api.workflows.getById.queryOptions({
+      input: { workflowId },
     }).queryKey;
-    const historyQueryKey = api.tasks.getHistory.queryOptions({
-      input: { taskId, limit: 50 },
+    const historyQueryKey = api.workflows.getHistory.queryOptions({
+      input: { workflowId, limit: 50 },
     }).queryKey;
-    const listQueryKey = api.tasks.getAll.queryOptions().queryKey;
+    const listQueryKey = api.workflows.getAll.queryOptions().queryKey;
 
-    // Update task metadata from the event
-    queryClient.setQueryData(taskQueryKey, event.task);
+    // Update workflow metadata from the event
+    queryClient.setQueryData(workflowQueryKey, event.workflow);
 
     // Optimistically update history cache with new event
-    if (event.type === "event" || event.type === "progress") {
+    if (event.type === "phase-progress" || event.type === "workflow-progress") {
       queryClient.setQueryData(historyQueryKey, (oldHistory: any) => {
         const baseHistory = Array.isArray(oldHistory) ? oldHistory : [];
 
@@ -82,15 +82,18 @@ export function useTaskWebSocket(
         const newHistoryEntry = {
           id: Date.now(), // Temporary ID until server refetch
           eventType:
-            event.type === "event" ? event.event.eventType : "progress",
+            event.type === "phase-progress"
+              ? "phase-progress"
+              : "workflow-progress",
+          phaseKey: event.type === "phase-progress" ? event.phase : null,
           message:
-            event.type === "event"
-              ? event.event.message
-              : `Progress updated to ${event.progress}%`,
+            event.type === "phase-progress"
+              ? `Phase ${event.phase} progress: ${event.progress}%`
+              : `Overall progress: ${event.overallProgress}%`,
           progress:
-            event.type === "event"
-              ? (event.event.progress ?? null)
-              : event.progress,
+            event.type === "phase-progress"
+              ? event.progress
+              : event.overallProgress,
           timestamp: event.timestamp,
           metadata: null,
         };
@@ -103,16 +106,37 @@ export function useTaskWebSocket(
     // Still invalidate to ensure consistency with server (async refetch)
     queryClient.invalidateQueries({ queryKey: historyQueryKey });
 
-    // Update task in list if present
-    queryClient.setQueryData(listQueryKey, (oldData: any) => {
-      if (!oldData?.tasks) return oldData;
+    // Update phases cache with data from WebSocket event
+    const phasesQueryKey = api.workflows.getPhases.queryOptions({
+      input: { workflowId },
+    }).queryKey;
 
-      return {
-        ...oldData,
-        tasks: oldData.tasks.map((task: any) =>
-          task.id === taskId ? { ...task, ...event.task } : task
-        ),
-      };
+    // Immediate UI update with phases from WebSocket event
+    if (Array.isArray((event as any).phases)) {
+      queryClient.setQueryData(phasesQueryKey, (event as any).phases);
+    }
+
+    // Ensure eventual consistency with server
+    queryClient.invalidateQueries({ queryKey: phasesQueryKey });
+
+    // Update workflow in list if present
+    queryClient.setQueryData(listQueryKey, (oldData: any) => {
+      if (!oldData) return oldData;
+
+      return oldData.map((workflow: any) =>
+        workflow.id === workflowId
+          ? {
+              ...workflow,
+              status: event.workflow.status,
+              overallProgress: event.workflow.overallProgress,
+              expectedPhaseCount: event.workflow.expectedPhaseCount,
+              completedPhaseCount: event.workflow.completedPhaseCount,
+              activePhaseKey: event.workflow.activePhaseKey,
+              updatedAt: new Date(event.workflow.updatedAt),
+              phases: event.phases, // Phases come from the event (relational table)
+            }
+          : workflow
+      );
     });
 
     setConnectionState((prev) => ({
@@ -122,13 +146,13 @@ export function useTaskWebSocket(
 
     const processingDuration = Date.now() - receiveTime;
     console.log(
-      `[WebSocket] ✅ Cache Update Complete | taskId=${taskId} | type=${event.type} | processingDuration=${processingDuration}ms`
+      `[WorkflowWebSocket] ✅ Cache Update Complete | workflowId=${workflowId} | type=${event.type} | processingDuration=${processingDuration}ms`
     );
   };
 
   // Function to establish WebSocket connection
   const connect = () => {
-    if (!(enabled && taskId)) return;
+    if (!(enabled && workflowId)) return;
 
     setConnectionState((prev) => ({
       ...prev,
@@ -136,10 +160,10 @@ export function useTaskWebSocket(
       error: null,
     }));
 
-    wsRef.current = createTaskWebSocket(taskId, {
+    wsRef.current = createWorkflowWebSocket(workflowId, {
       onOpen: () => {
         console.log(
-          `[WebSocket] 🔌 Connected | taskId=${taskId} | timestamp=${new Date().toISOString()}`
+          `[WorkflowWebSocket] 🔌 Connected | workflowId=${workflowId} | timestamp=${new Date().toISOString()}`
         );
 
         setConnectionState({
@@ -167,9 +191,9 @@ export function useTaskWebSocket(
           return;
         }
 
-        // Handle task update events
-        updateQueryCache(message as TaskUpdateEvent);
-        onUpdate?.(message as TaskUpdateEvent);
+        // Handle workflow update events
+        updateQueryCache(message as WorkflowUpdateEvent);
+        onUpdate?.(message as WorkflowUpdateEvent);
       },
       onClose: () => {
         setConnectionState((prev) => ({
@@ -185,7 +209,7 @@ export function useTaskWebSocket(
         }
 
         // Attempt to reconnect after delay
-        if (enabled && taskId) {
+        if (enabled && workflowId) {
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, reconnectInterval);
@@ -221,7 +245,7 @@ export function useTaskWebSocket(
 
   // Establish connection on mount and when dependencies change
   useEffect(() => {
-    if (enabled && taskId) {
+    if (enabled && workflowId) {
       connect();
     }
 
@@ -229,7 +253,7 @@ export function useTaskWebSocket(
     return () => {
       disconnect();
     };
-  }, [enabled, taskId]);
+  }, [enabled, workflowId]);
 
   return {
     ...connectionState,

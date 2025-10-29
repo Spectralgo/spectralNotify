@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import type { TaskEvent } from "@/types/task";
 import { api } from "@/utils/orpc";
 import { useTaskWebSocket } from "./use-task-websocket";
-import type { TaskEvent } from "@/types/task";
 
 interface UseTaskDetailOptions {
   taskId?: string;

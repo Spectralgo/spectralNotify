@@ -18,7 +18,9 @@ export function useTasks(filters?: TaskFilters) {
   let filteredTasks = query.data || [];
 
   if (filters?.status) {
-    filteredTasks = filteredTasks.filter((task) => task.status === filters.status);
+    filteredTasks = filteredTasks.filter(
+      (task) => task.status === filters.status
+    );
   }
 
   if (filters?.search) {

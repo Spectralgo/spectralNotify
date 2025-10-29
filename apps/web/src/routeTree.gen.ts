@@ -19,9 +19,12 @@ import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as SuperAdminTasksRouteRouteImport } from './routes/super-admin/tasks/route'
 import { Route as SuperAdminCountersRouteRouteImport } from './routes/super-admin/counters/route'
+import { Route as AppWorkflowsRouteRouteImport } from './routes/_app/workflows/route'
 import { Route as AppTasksRouteRouteImport } from './routes/_app/tasks/route'
 import { Route as SuperAdminTasksIndexRouteImport } from './routes/super-admin/tasks/index'
 import { Route as SuperAdminCountersIndexRouteImport } from './routes/super-admin/counters/index'
+import { Route as AppWorkflowsLiveRouteImport } from './routes/_app/workflows/live'
+import { Route as AppWorkflowsAllRouteImport } from './routes/_app/workflows/all'
 import { Route as AppTasksLiveRouteImport } from './routes/_app/tasks/live'
 import { Route as AppTasksFailedRouteImport } from './routes/_app/tasks/failed'
 import { Route as AppTasksCompletedRouteImport } from './routes/_app/tasks/completed'
@@ -75,6 +78,11 @@ const SuperAdminCountersRouteRoute = SuperAdminCountersRouteRouteImport.update({
   path: '/counters',
   getParentRoute: () => SuperAdminRouteRoute,
 } as any)
+const AppWorkflowsRouteRoute = AppWorkflowsRouteRouteImport.update({
+  id: '/workflows',
+  path: '/workflows',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppTasksRouteRoute = AppTasksRouteRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -89,6 +97,16 @@ const SuperAdminCountersIndexRoute = SuperAdminCountersIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => SuperAdminCountersRouteRoute,
+} as any)
+const AppWorkflowsLiveRoute = AppWorkflowsLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => AppWorkflowsRouteRoute,
+} as any)
+const AppWorkflowsAllRoute = AppWorkflowsAllRouteImport.update({
+  id: '/all',
+  path: '/all',
+  getParentRoute: () => AppWorkflowsRouteRoute,
 } as any)
 const AppTasksLiveRoute = AppTasksLiveRouteImport.update({
   id: '/live',
@@ -114,6 +132,7 @@ const AppTasksAllRoute = AppTasksAllRouteImport.update({
 export interface FileRoutesByFullPath {
   '/super-admin': typeof SuperAdminRouteRouteWithChildren
   '/tasks': typeof AppTasksRouteRouteWithChildren
+  '/workflows': typeof AppWorkflowsRouteRouteWithChildren
   '/super-admin/counters': typeof SuperAdminCountersRouteRouteWithChildren
   '/super-admin/tasks': typeof SuperAdminTasksRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
@@ -125,11 +144,14 @@ export interface FileRoutesByFullPath {
   '/tasks/completed': typeof AppTasksCompletedRoute
   '/tasks/failed': typeof AppTasksFailedRoute
   '/tasks/live': typeof AppTasksLiveRoute
+  '/workflows/all': typeof AppWorkflowsAllRoute
+  '/workflows/live': typeof AppWorkflowsLiveRoute
   '/super-admin/counters/': typeof SuperAdminCountersIndexRoute
   '/super-admin/tasks/': typeof SuperAdminTasksIndexRoute
 }
 export interface FileRoutesByTo {
   '/tasks': typeof AppTasksRouteRouteWithChildren
+  '/workflows': typeof AppWorkflowsRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/login': typeof AuthLoginRoute
   '/super-admin/api-status': typeof SuperAdminApiStatusRoute
@@ -139,6 +161,8 @@ export interface FileRoutesByTo {
   '/tasks/completed': typeof AppTasksCompletedRoute
   '/tasks/failed': typeof AppTasksFailedRoute
   '/tasks/live': typeof AppTasksLiveRoute
+  '/workflows/all': typeof AppWorkflowsAllRoute
+  '/workflows/live': typeof AppWorkflowsLiveRoute
   '/super-admin/counters': typeof SuperAdminCountersIndexRoute
   '/super-admin/tasks': typeof SuperAdminTasksIndexRoute
 }
@@ -148,6 +172,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/super-admin': typeof SuperAdminRouteRouteWithChildren
   '/_app/tasks': typeof AppTasksRouteRouteWithChildren
+  '/_app/workflows': typeof AppWorkflowsRouteRouteWithChildren
   '/super-admin/counters': typeof SuperAdminCountersRouteRouteWithChildren
   '/super-admin/tasks': typeof SuperAdminTasksRouteRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
@@ -159,6 +184,8 @@ export interface FileRoutesById {
   '/_app/tasks/completed': typeof AppTasksCompletedRoute
   '/_app/tasks/failed': typeof AppTasksFailedRoute
   '/_app/tasks/live': typeof AppTasksLiveRoute
+  '/_app/workflows/all': typeof AppWorkflowsAllRoute
+  '/_app/workflows/live': typeof AppWorkflowsLiveRoute
   '/super-admin/counters/': typeof SuperAdminCountersIndexRoute
   '/super-admin/tasks/': typeof SuperAdminTasksIndexRoute
 }
@@ -167,6 +194,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/super-admin'
     | '/tasks'
+    | '/workflows'
     | '/super-admin/counters'
     | '/super-admin/tasks'
     | '/dashboard'
@@ -178,11 +206,14 @@ export interface FileRouteTypes {
     | '/tasks/completed'
     | '/tasks/failed'
     | '/tasks/live'
+    | '/workflows/all'
+    | '/workflows/live'
     | '/super-admin/counters/'
     | '/super-admin/tasks/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/tasks'
+    | '/workflows'
     | '/dashboard'
     | '/login'
     | '/super-admin/api-status'
@@ -192,6 +223,8 @@ export interface FileRouteTypes {
     | '/tasks/completed'
     | '/tasks/failed'
     | '/tasks/live'
+    | '/workflows/all'
+    | '/workflows/live'
     | '/super-admin/counters'
     | '/super-admin/tasks'
   id:
@@ -200,6 +233,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/super-admin'
     | '/_app/tasks'
+    | '/_app/workflows'
     | '/super-admin/counters'
     | '/super-admin/tasks'
     | '/_app/dashboard'
@@ -211,6 +245,8 @@ export interface FileRouteTypes {
     | '/_app/tasks/completed'
     | '/_app/tasks/failed'
     | '/_app/tasks/live'
+    | '/_app/workflows/all'
+    | '/_app/workflows/live'
     | '/super-admin/counters/'
     | '/super-admin/tasks/'
   fileRoutesById: FileRoutesById
@@ -293,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperAdminCountersRouteRouteImport
       parentRoute: typeof SuperAdminRouteRoute
     }
+    '/_app/workflows': {
+      id: '/_app/workflows'
+      path: '/workflows'
+      fullPath: '/workflows'
+      preLoaderRoute: typeof AppWorkflowsRouteRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/tasks': {
       id: '/_app/tasks'
       path: '/tasks'
@@ -313,6 +356,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/super-admin/counters/'
       preLoaderRoute: typeof SuperAdminCountersIndexRouteImport
       parentRoute: typeof SuperAdminCountersRouteRoute
+    }
+    '/_app/workflows/live': {
+      id: '/_app/workflows/live'
+      path: '/live'
+      fullPath: '/workflows/live'
+      preLoaderRoute: typeof AppWorkflowsLiveRouteImport
+      parentRoute: typeof AppWorkflowsRouteRoute
+    }
+    '/_app/workflows/all': {
+      id: '/_app/workflows/all'
+      path: '/all'
+      fullPath: '/workflows/all'
+      preLoaderRoute: typeof AppWorkflowsAllRouteImport
+      parentRoute: typeof AppWorkflowsRouteRoute
     }
     '/_app/tasks/live': {
       id: '/_app/tasks/live'
@@ -363,14 +420,29 @@ const AppTasksRouteRouteWithChildren = AppTasksRouteRoute._addFileChildren(
   AppTasksRouteRouteChildren,
 )
 
+interface AppWorkflowsRouteRouteChildren {
+  AppWorkflowsAllRoute: typeof AppWorkflowsAllRoute
+  AppWorkflowsLiveRoute: typeof AppWorkflowsLiveRoute
+}
+
+const AppWorkflowsRouteRouteChildren: AppWorkflowsRouteRouteChildren = {
+  AppWorkflowsAllRoute: AppWorkflowsAllRoute,
+  AppWorkflowsLiveRoute: AppWorkflowsLiveRoute,
+}
+
+const AppWorkflowsRouteRouteWithChildren =
+  AppWorkflowsRouteRoute._addFileChildren(AppWorkflowsRouteRouteChildren)
+
 interface AppRouteRouteChildren {
   AppTasksRouteRoute: typeof AppTasksRouteRouteWithChildren
+  AppWorkflowsRouteRoute: typeof AppWorkflowsRouteRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppTasksRouteRoute: AppTasksRouteRouteWithChildren,
+  AppWorkflowsRouteRoute: AppWorkflowsRouteRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppIndexRoute: AppIndexRoute,
 }

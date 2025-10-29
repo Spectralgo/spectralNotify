@@ -102,7 +102,9 @@ function TasksManagementPage() {
                 Delete All Tasks?
               </AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete <strong>all {taskList.length} tasks</strong> and clear their Durable Object storage including:
+                This will permanently delete{" "}
+                <strong>all {taskList.length} tasks</strong> and clear their
+                Durable Object storage including:
                 <ul className="mt-2 list-inside list-disc space-y-1">
                   <li>All task metadata and statuses</li>
                   <li>Complete event histories</li>
@@ -110,7 +112,8 @@ function TasksManagementPage() {
                   <li>All registry entries</li>
                 </ul>
                 <p className="mt-4 font-semibold text-destructive">
-                  This action cannot be undone. All task data will be permanently lost.
+                  This action cannot be undone. All task data will be
+                  permanently lost.
                 </p>
               </AlertDialogDescription>
             </AlertDialogHeader>

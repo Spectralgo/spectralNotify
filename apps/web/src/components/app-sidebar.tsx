@@ -1,6 +1,6 @@
 "use client";
 
-import { Inbox, ListChecks, OctagonX, RadioTower } from "lucide-react";
+import { Inbox, ListChecks, Network, OctagonX, RadioTower } from "lucide-react";
 import type * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
@@ -42,6 +42,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/tasks/failed",
       icon: OctagonX,
       badge: stats.failed > 0 ? stats.failed : undefined,
+    },
+    {
+      title: "All Workflows",
+      url: "/workflows/all",
+      icon: Network,
+    },
+    {
+      title: "Live Workflows",
+      url: "/workflows/live",
+      icon: RadioTower,
     },
   ];
 

@@ -1,11 +1,11 @@
-import { AlertCircle, CheckCircle2, Info, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info, Loader2, XCircle } from "lucide-react";
 import { motion } from "motion/react";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
-type EventType = "log" | "progress" | "error" | "success";
+type EventType = "log" | "progress" | "error" | "success" | "phase-progress" | "workflow-progress" | "cancel";
 
 interface TaskEvent {
   id: string;
@@ -28,6 +28,9 @@ const eventIcons: Record<
   progress: Loader2,
   error: AlertCircle,
   success: CheckCircle2,
+  "phase-progress": Loader2,
+  "workflow-progress": Loader2,
+  cancel: XCircle,
 };
 
 const eventColors: Record<EventType, string> = {
@@ -35,6 +38,9 @@ const eventColors: Record<EventType, string> = {
   progress: "text-emerald-400 bg-emerald-500/10",
   error: "text-red-400 bg-red-500/10",
   success: "text-emerald-400 bg-emerald-500/10",
+  "phase-progress": "text-emerald-400 bg-emerald-500/10",
+  "workflow-progress": "text-emerald-400 bg-emerald-500/10",
+  cancel: "text-orange-400 bg-orange-500/10",
 };
 
 function formatTimestamp(date: Date): string {
@@ -45,9 +51,28 @@ function formatTimestamp(date: Date): string {
 }
 
 function EventTimeline({ events, className, ...props }: EventTimelineProps) {
+  const renderTime = Date.now();
+  const renderTimestamp = new Date().toISOString();
+
+  console.log(
+    `[EventTimeline] 🎨 RENDER Start | eventCount=${events.length} | timestamp=${renderTimestamp}`
+  );
+
   // Events should be in reverse chronological order (newest first)
   const sortedEvents = [...events].sort(
     (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+  );
+
+  // Log each event being rendered
+  sortedEvents.forEach((event, idx) => {
+    console.log(
+      `[EventTimeline] 📄 Rendering Event #${idx + 1} | type=${event.type} | message="${event.message}" | eventTimestamp=${event.timestamp.toISOString()}`
+    );
+  });
+
+  const sortDuration = Date.now() - renderTime;
+  console.log(
+    `[EventTimeline] ✅ RENDER Complete | eventCount=${events.length} | sortDuration=${sortDuration}ms`
   );
 
   return (
@@ -88,7 +113,7 @@ function EventTimeline({ events, className, ...props }: EventTimelineProps) {
                 </div>
 
                 {/* Progress bar for progress events */}
-                {event.type === "progress" && event.progress !== undefined && (
+                {(event.type === "progress" || event.type === "phase-progress" || event.type === "workflow-progress") && event.progress !== undefined && (
                   <div className="flex items-center gap-2">
                     <Progress className="h-1" value={event.progress} />
                     <span className="whitespace-nowrap font-medium text-xs">

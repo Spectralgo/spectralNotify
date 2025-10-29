@@ -8,9 +8,7 @@ export function useDeleteTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (taskId: string) => {
-      return await client.tasks.delete({ taskId });
-    },
+    mutationFn: async (taskId: string) => await client.tasks.delete({ taskId }),
     onSuccess: () => {
       // Invalidate task list query to refetch
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -25,9 +23,7 @@ export function useDeleteAllTasks() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      return await client.tasks.deleteAll();
-    },
+    mutationFn: async () => await client.tasks.deleteAll(),
     onSuccess: () => {
       // Invalidate task list query to refetch
       queryClient.invalidateQueries({ queryKey: ["tasks"] });

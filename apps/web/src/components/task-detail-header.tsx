@@ -46,7 +46,7 @@ function TaskDetailHeader({
 
     if (connectionError) {
       return (
-        <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-1 text-red-400 text-xs font-medium">
+        <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-1 font-medium text-red-400 text-xs">
           <span className="h-2 w-2 rounded-full bg-red-500" />
           Error
         </span>
@@ -55,7 +55,7 @@ function TaskDetailHeader({
 
     if (isConnecting) {
       return (
-        <span className="flex items-center gap-1.5 rounded-full bg-yellow-500/20 px-2 py-1 text-yellow-400 text-xs font-medium">
+        <span className="flex items-center gap-1.5 rounded-full bg-yellow-500/20 px-2 py-1 font-medium text-xs text-yellow-400">
           <span className="h-2 w-2 animate-pulse rounded-full bg-yellow-500" />
           Connecting...
         </span>
@@ -64,7 +64,7 @@ function TaskDetailHeader({
 
     if (isConnected) {
       return (
-        <span className="flex items-center gap-1.5 rounded-full bg-green-500/20 px-2 py-1 text-green-400 text-xs font-medium">
+        <span className="flex items-center gap-1.5 rounded-full bg-green-500/20 px-2 py-1 font-medium text-green-400 text-xs">
           <span className="h-2 w-2 rounded-full bg-green-500" />
           Live
         </span>
@@ -72,7 +72,7 @@ function TaskDetailHeader({
     }
 
     return (
-      <span className="flex items-center gap-1.5 rounded-full bg-gray-500/20 px-2 py-1 text-gray-400 text-xs font-medium">
+      <span className="flex items-center gap-1.5 rounded-full bg-gray-500/20 px-2 py-1 font-medium text-gray-400 text-xs">
         <span className="h-2 w-2 rounded-full bg-gray-500" />
         Disconnected
       </span>
