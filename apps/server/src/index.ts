@@ -33,7 +33,9 @@ app.use(
     origin: (origin, c) => {
       const corsOrigin = c.env.CORS_ORIGIN;
       // Parse comma-separated origins
-      const allowedOrigins = corsOrigin ? corsOrigin.split(",").map(o => o.trim()) : [];
+      const allowedOrigins = corsOrigin
+        ? corsOrigin.split(",").map((o: string) => o.trim())
+        : [];
 
       // In development, allow localhost origins
       if (origin) {
@@ -53,7 +55,12 @@ app.use(
       return allowedOrigins.length > 0 ? allowedOrigins[0] : "*";
     },
     allowMethods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-    allowHeaders: ["Content-Type", "Authorization", "X-API-Key", "Idempotency-Key"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-API-Key",
+      "Idempotency-Key",
+    ],
     credentials: true,
   })
 );
@@ -97,7 +104,9 @@ app.use("/*", async (c, next) => {
 
   // Check API key (supports X-API-Key and Authorization: Bearer <key>)
   const headerApiKey = headers.get("X-API-Key") || undefined;
-  console.log(`[Middleware] X-API-Key header: ${headerApiKey ? 'present' : 'missing'}`);
+  console.log(
+    `[Middleware] X-API-Key header: ${headerApiKey ? "present" : "missing"}`
+  );
   const authHeader = headers.get("Authorization") || "";
   const bearerMatch = authHeader.startsWith("Bearer ")
     ? authHeader.slice("Bearer ".length)
@@ -114,11 +123,14 @@ app.use("/*", async (c, next) => {
 
   // Determine session: prefer user session; otherwise accept valid API key as service session
   const userSession = await auth.api.getSession({ headers });
-  const serviceSession = providedKey && expectedKey && providedKey === expectedKey
-    ? ({ user: { id: "service", name: "Notify Service" } } as unknown)
-    : null;
+  const serviceSession =
+    providedKey && expectedKey && providedKey === expectedKey
+      ? ({ user: { id: "service", name: "Notify Service" } } as unknown)
+      : null;
 
-  const session = (userSession || serviceSession) as typeof auth.$Infer.Session | null;
+  const session = (userSession || serviceSession) as
+    | typeof auth.$Infer.Session
+    | null;
 
   if (serviceSession) {
     console.log("[Auth] Using service session (API key validated)");
@@ -136,8 +148,8 @@ app.use("/*", async (c, next) => {
     ...c.env, // Spread all env bindings (DB, COUNTER, TASK, etc.)
   };
 
-  console.log(`[Context] session: ${session ? 'present' : 'null'}`);
-  console.log(`[Context] session.user: ${session?.user ? 'present' : 'null'}`);
+  console.log(`[Context] session: ${session ? "present" : "null"}`);
+  console.log(`[Context] session.user: ${session?.user ? "present" : "null"}`);
   console.log(`[Context] apiKeyAuthorized: ${context.apiKeyAuthorized}`);
 
   // 1. Try REST endpoints first (/tasks/*, /counter/*, etc.)
@@ -147,7 +159,7 @@ app.use("/*", async (c, next) => {
   });
 
   if (restResult.matched) {
-    return c.newResponse(restResult.response.body, restResult.response);
+    return restResult.response;
   }
 
   // 2. Try RPC endpoints (/rpc)
@@ -157,7 +169,7 @@ app.use("/*", async (c, next) => {
   });
 
   if (rpcResult.matched) {
-    return c.newResponse(rpcResult.response.body, rpcResult.response);
+    return rpcResult.response;
   }
 
   // 3. Try documentation (/api-reference)
@@ -167,7 +179,7 @@ app.use("/*", async (c, next) => {
   });
 
   if (docsResult.matched) {
-    return c.newResponse(docsResult.response.body, docsResult.response);
+    return docsResult.response;
   }
 
   await next();

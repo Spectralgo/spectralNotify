@@ -1,5 +1,10 @@
 import z from "zod";
-import { apiKeyProcedure, protectedProcedure, publicProcedure, withIdempotency } from "../../index";
+import {
+  apiKeyProcedure,
+  protectedProcedure,
+  publicProcedure,
+  withIdempotency,
+} from "../../index";
 import { withIdempotency as withIdempotencySchema } from "../../schemas/idempotency";
 import {
   handleAddEvent,
@@ -77,6 +82,36 @@ const historySchema = z.object({
   limit: z.number().int().positive().max(100).optional().default(50),
 });
 
+// Zod schema for TaskMetadata response
+const taskMetadataResponseSchema = z.object({
+  id: z.number(),
+  taskId: z.string(),
+  status: z.string(),
+  progress: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  completedAt: z.string().nullable(),
+  failedAt: z.string().nullable(),
+  canceledAt: z.string().nullable(),
+  metadata: z.string(),
+});
+
+// Zod schema for TaskHistory response
+const taskHistoryResponseSchema = z.object({
+  id: z.number(),
+  eventType: z.string(),
+  message: z.string(),
+  progress: z.number().nullable(),
+  timestamp: z.string(),
+  metadata: z.string().nullable(),
+});
+
+// Zod schema for EnrichedTaskResponse
+const enrichedTaskResponseSchema = z.object({
+  task: taskMetadataResponseSchema,
+  latestHistory: z.array(taskHistoryResponseSchema),
+});
+
 /**
  * Tasks router - uses Task Durable Objects
  */
@@ -120,7 +155,7 @@ export const tasksRouter = {
     const db = context.DB;
     const taskBinding = context.TASK;
 
-    if (!db || !taskBinding) {
+    if (!(db && taskBinding)) {
       throw new Error("Database or TASK binding not available");
     }
 
@@ -142,10 +177,17 @@ export const tasksRouter = {
       taskIds.map(async (registryEntry) => {
         try {
           // biome-ignore lint: Dynamic binding type
-          const task = await handleGetTask(taskBinding as any, registryEntry.taskId);
+          const task = await handleGetTask(
+            taskBinding as any,
+            registryEntry.taskId
+          );
           // Get the latest event from history
           // biome-ignore lint: Dynamic binding type
-          const history = await handleGetTaskHistory(taskBinding as any, registryEntry.taskId, 1);
+          const history = await handleGetTaskHistory(
+            taskBinding as any,
+            registryEntry.taskId,
+            1
+          );
 
           return {
             id: task.taskId,
@@ -153,21 +195,25 @@ export const tasksRouter = {
             progress: task.progress,
             createdAt: new Date(task.createdAt),
             updatedAt: new Date(task.updatedAt),
-            completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
+            completedAt: task.completedAt
+              ? new Date(task.completedAt)
+              : undefined,
             failedAt: task.failedAt ? new Date(task.failedAt) : undefined,
             canceledAt: task.canceledAt ? new Date(task.canceledAt) : undefined,
-            lastEvent: history[0] ? {
-              id: history[0].id.toString(),
-              timestamp: new Date(history[0].timestamp),
-              type: history[0].eventType as any,
-              message: history[0].message,
-              progress: history[0].progress ?? undefined,
-            } : {
-              id: "0",
-              timestamp: new Date(task.createdAt),
-              type: "log" as const,
-              message: "Task created",
-            },
+            lastEvent: history[0]
+              ? {
+                  id: history[0].id.toString(),
+                  timestamp: new Date(history[0].timestamp),
+                  type: history[0].eventType as any,
+                  message: history[0].message,
+                  progress: history[0].progress ?? undefined,
+                }
+              : {
+                  id: "0",
+                  timestamp: new Date(task.createdAt),
+                  type: "log" as const,
+                  message: "Task created",
+                },
             events: [],
           };
         } catch (error) {
@@ -189,10 +235,14 @@ export const tasksRouter = {
   create: apiKeyProcedure
     .use(withIdempotency)
     .input(createTaskSchema)
-    .output(withIdempotencySchema(z.object({
-      success: z.boolean(),
-      taskId: z.string(),
-    })))
+    .output(
+      withIdempotencySchema(
+        z.object({
+          success: z.boolean(),
+          taskId: z.string(),
+        })
+      )
+    )
     .handler(async ({ input, context }) => {
       try {
         const taskBinding = context.TASK;
@@ -311,6 +361,7 @@ export const tasksRouter = {
   updateProgress: apiKeyProcedure
     .use(withIdempotency)
     .input(updateProgressSchema)
+    .output(withIdempotencySchema(enrichedTaskResponseSchema))
     .handler(async ({ input, context }) => {
       try {
         const taskBinding = context.TASK;
@@ -339,6 +390,7 @@ export const tasksRouter = {
   complete: apiKeyProcedure
     .use(withIdempotency)
     .input(taskMetadataSchema)
+    .output(withIdempotencySchema(enrichedTaskResponseSchema))
     .handler(async ({ input, context }) => {
       try {
         const taskBinding = context.TASK;
@@ -367,6 +419,7 @@ export const tasksRouter = {
   fail: apiKeyProcedure
     .use(withIdempotency)
     .input(failTaskSchema)
+    .output(withIdempotencySchema(enrichedTaskResponseSchema))
     .handler(async ({ input, context }) => {
       try {
         const taskBinding = context.TASK;
@@ -396,6 +449,7 @@ export const tasksRouter = {
   cancel: apiKeyProcedure
     .use(withIdempotency)
     .input(taskMetadataSchema)
+    .output(withIdempotencySchema(enrichedTaskResponseSchema))
     .handler(async ({ input, context }) => {
       try {
         const taskBinding = context.TASK;
@@ -487,57 +541,54 @@ export const tasksRouter = {
    * Delete all tasks (super admin only - requires authentication)
    * This orchestrates deletion of all task registries and their Durable Objects
    */
-  deleteAll: protectedProcedure
-    .handler(async ({ context }) => {
-      try {
-        const taskBinding = context.TASK;
-        if (!taskBinding) {
-          throw new Error("TASK binding not available");
-        }
-
-        const db = context.DB;
-        if (!db) {
-          throw new Error("Database not available");
-        }
-
-        // Get all tasks from registry
-        const { taskRegistry } = await import("@spectralNotify/db");
-        const { drizzle } = await import("drizzle-orm/d1");
-        const database = drizzle(db as any);
-
-        const allTasks = await database
-          .select()
-          .from(taskRegistry)
-          .all();
-
-        // Delete all task DOs in parallel
-        const deletePromises = allTasks.map((task) =>
-          // biome-ignore lint: Dynamic binding type
-          handleDeleteTask(taskBinding as any, task.taskId).catch((error) => ({
-            taskId: task.taskId,
-            error: error instanceof Error ? error.message : "Unknown error",
-          }))
-        );
-
-        const results = await Promise.all(deletePromises);
-
-        // Filter out failed deletions
-        const failures = results.filter((r): r is { taskId: string; error: string } =>
-          typeof r === "object" && "error" in r
-        );
-
-        // Delete all from registry (even if some DO deletions failed)
-        await database.delete(taskRegistry);
-
-        return {
-          success: true,
-          deleted: allTasks.length,
-          failures: failures.length > 0 ? failures : undefined,
-        };
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error";
-        throw new Error(`Failed to delete all tasks: ${errorMessage}`);
+  deleteAll: protectedProcedure.handler(async ({ context }) => {
+    try {
+      const taskBinding = context.TASK;
+      if (!taskBinding) {
+        throw new Error("TASK binding not available");
       }
-    }),
+
+      const db = context.DB;
+      if (!db) {
+        throw new Error("Database not available");
+      }
+
+      // Get all tasks from registry
+      const { taskRegistry } = await import("@spectralNotify/db");
+      const { drizzle } = await import("drizzle-orm/d1");
+      const database = drizzle(db as any);
+
+      const allTasks = await database.select().from(taskRegistry).all();
+
+      // Delete all task DOs in parallel
+      const deletePromises = allTasks.map((task) =>
+        // biome-ignore lint: Dynamic binding type
+        handleDeleteTask(taskBinding as any, task.taskId).catch((error) => ({
+          taskId: task.taskId,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }))
+      );
+
+      const results = await Promise.all(deletePromises);
+
+      // Filter out failed deletions
+      const failures = results.filter(
+        (r): r is { taskId: string; error: string } =>
+          typeof r === "object" && "error" in r
+      );
+
+      // Delete all from registry (even if some DO deletions failed)
+      await database.delete(taskRegistry);
+
+      return {
+        success: true,
+        deleted: allTasks.length,
+        failures: failures.length > 0 ? failures : undefined,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to delete all tasks: ${errorMessage}`);
+    }
+  }),
 };
