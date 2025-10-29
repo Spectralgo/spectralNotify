@@ -12,6 +12,7 @@ import { logger } from "hono/logger";
 // Export Durable Objects
 export { Counter } from "./counter";
 export { Task } from "./task";
+export { Workflow } from "./workflow";
 
 type Env = {
   CORS_ORIGIN: string;
@@ -22,6 +23,7 @@ type Env = {
   DB: D1Database;
   COUNTER: DurableObjectNamespace;
   TASK: DurableObjectNamespace;
+  WORKFLOW: DurableObjectNamespace;
 };
 
 const app = new Hono<{ Bindings: Env }>();
@@ -159,6 +161,20 @@ app.use("/*", async (c, next) => {
   });
 
   if (restResult.matched) {
+    // Debug response body to diagnose empty JSON issue
+    try {
+      const clone = restResult.response.clone();
+      const text = await clone.text();
+      console.log("[DEBUG] REST response status:", restResult.response.status);
+      console.log("[DEBUG] REST response body length:", text.length);
+      if (text.length > 0) {
+        console.log("[DEBUG] REST response preview:", text.slice(0, 200));
+      } else {
+        console.log("[DEBUG] REST response is empty body");
+      }
+    } catch (e) {
+      console.log("[DEBUG] Failed to read REST response body:", e);
+    }
     return restResult.response;
   }
 
@@ -223,6 +239,25 @@ app.get("/ws/task/:taskId", async (c) => {
   // Forward the request to the Durable Object
   // The DO's fetch() handler will handle the WebSocket upgrade
   return taskStub.fetch(c.req.raw);
+});
+
+// WebSocket upgrade endpoint for Workflow Durable Objects
+// This proxies the WebSocket connection directly to the appropriate Workflow DO
+app.get("/ws/workflow/:workflowId", async (c) => {
+  const workflowId = c.req.param("workflowId");
+
+  // Validate that this is a WebSocket upgrade request
+  if (c.req.header("Upgrade") !== "websocket") {
+    return c.text("Expected WebSocket upgrade", 426);
+  }
+
+  // Get the Workflow Durable Object stub by workflowId
+  const workflowDoId = c.env.WORKFLOW.idFromName(workflowId);
+  const workflowStub = c.env.WORKFLOW.get(workflowDoId);
+
+  // Forward the request to the Durable Object
+  // The DO's fetch() handler will handle the WebSocket upgrade
+  return workflowStub.fetch(c.req.raw);
 });
 
 export default app;

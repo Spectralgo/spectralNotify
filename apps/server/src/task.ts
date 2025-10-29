@@ -69,6 +69,13 @@ export class Task extends DurableObject {
     progress?: number;
     metadata: Record<string, unknown>;
   }): Promise<void> {
+    const startTime = Date.now();
+    const timestamp = new Date().toISOString();
+
+    console.log(
+      `[TaskDO] 📥 RECEIVE initialize | taskId=${input.taskId} | status=${input.status} | timestamp=${timestamp}`
+    );
+
     const existing = await this.db
       .select()
       .from(taskMetadata)
@@ -77,6 +84,7 @@ export class Task extends DurableObject {
 
     if (existing) {
       this.taskId = existing.taskId;
+      console.log(`[TaskDO] ℹ️ Task already exists | taskId=${existing.taskId}`);
     } else {
       const now = new Date().toISOString();
       const newTask: NewTaskMetadata = {
@@ -101,6 +109,11 @@ export class Task extends DurableObject {
       };
 
       await this.db.insert(taskHistory).values(initialEvent);
+
+      const duration = Date.now() - startTime;
+      console.log(
+        `[TaskDO] ✅ initialize Complete | taskId=${input.taskId} | duration=${duration}ms`
+      );
     }
   }
 
@@ -196,8 +209,14 @@ export class Task extends DurableObject {
     task: TaskMetadata;
     latestHistory: TaskHistory[];
   }> {
-    const task = await this.getTask();
+    const startTime = Date.now();
     const now = new Date().toISOString();
+
+    console.log(
+      `[TaskDO] 📥 RECEIVE updateProgress | taskId=${this.taskId} | progress=${progress}% | timestamp=${now}`
+    );
+
+    const task = await this.getTask();
 
     // Use transaction to ensure atomicity
     await this.db.transaction(async (tx) => {
@@ -221,6 +240,11 @@ export class Task extends DurableObject {
       await tx.insert(taskHistory).values(historyEntry);
     });
 
+    const dbDuration = Date.now() - startTime;
+    console.log(
+      `[TaskDO] 💾 Database Write Complete | taskId=${this.taskId} | progress=${progress}% | dbDuration=${dbDuration}ms`
+    );
+
     // Fetch updated metadata and recent history
     const [updatedTask, latestHistory] = await Promise.all([
       this.getTask(),
@@ -228,6 +252,7 @@ export class Task extends DurableObject {
     ]);
 
     // Broadcast update to all connected WebSocket clients
+    const broadcastStart = Date.now();
     await this.broadcastUpdate({
       type: "progress",
       taskId: this.taskId,
@@ -235,6 +260,12 @@ export class Task extends DurableObject {
       task: updatedTask,
       timestamp: now,
     });
+
+    const broadcastDuration = Date.now() - broadcastStart;
+    const totalDuration = Date.now() - startTime;
+    console.log(
+      `[TaskDO] ✅ updateProgress Complete | taskId=${this.taskId} | progress=${progress}% | broadcastDuration=${broadcastDuration}ms | totalDuration=${totalDuration}ms`
+    );
 
     return {
       task: updatedTask,
@@ -452,17 +483,33 @@ export class Task extends DurableObject {
     progress?: number;
     error?: string;
   }): Promise<void> {
+    const broadcastStart = Date.now();
+    const sessionCount = this.sessions.size;
+
+    console.log(
+      `[TaskDO] 📡 BROADCAST Start | taskId=${this.taskId} | type=${event.type} | sessions=${sessionCount} | timestamp=${event.timestamp}`
+    );
+
     const message = JSON.stringify(event);
+    let successCount = 0;
+    let failCount = 0;
 
     this.sessions.forEach((_sessionData, ws) => {
       try {
         ws.send(message);
+        successCount++;
       } catch (error) {
         console.error("Failed to send WebSocket message:", error);
+        failCount++;
         // Remove failed sessions
         this.sessions.delete(ws);
       }
     });
+
+    const broadcastDuration = Date.now() - broadcastStart;
+    console.log(
+      `[TaskDO] 📡 BROADCAST Complete | taskId=${this.taskId} | type=${event.type} | success=${successCount} | failed=${failCount} | duration=${broadcastDuration}ms`
+    );
   }
 
   /**
@@ -553,6 +600,6 @@ export class Task extends DurableObject {
     _wasClean: boolean
   ): Promise<void> {
     this.sessions.delete(ws);
-    ws.close(code, "Task WebSocket closed");
+    // WebSocket is already closing - no need to call ws.close()
   }
 }

@@ -442,6 +442,6 @@ export class Counter extends DurableObject {
     _wasClean: boolean
   ): Promise<void> {
     this.sessions.delete(ws);
-    ws.close(code, "Counter WebSocket closed");
+    // WebSocket is already closing - no need to call ws.close()
   }
 }
