@@ -18,23 +18,23 @@ const statusConfig: Record<
 > = {
   pending: {
     label: "Pending",
-    className: "bg-muted text-muted-foreground border-border",
+    className: "bg-gray-500/10 text-gray-500 border-gray-500/20",
   },
   "in-progress": {
     label: "In Progress",
-    className: "bg-primary/10 text-primary border-primary/20",
+    className: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   },
   success: {
     label: "Success",
-    className: "bg-primary/10 text-primary border-primary/20",
+    className: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
   },
   failed: {
     label: "Failed",
-    className: "bg-destructive/10 text-destructive border-destructive/20",
+    className: "bg-red-500/10 text-red-500 border-red-500/20",
   },
   canceled: {
     label: "Canceled",
-    className: "bg-muted text-muted-foreground border-border",
+    className: "bg-gray-500/10 text-gray-500 border-gray-500/20",
   },
 };
 
@@ -44,7 +44,7 @@ function WorkflowStatusPill({ status, className }: WorkflowStatusPillProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 font-medium text-xs",
+        "inline-flex items-center rounded-full border px-2.5 py-0.5 font-normal text-xs",
         config.className,
         className
       )}

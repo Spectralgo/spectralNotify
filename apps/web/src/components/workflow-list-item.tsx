@@ -29,7 +29,7 @@ function WorkflowListItem({
     <motion.button
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "w-full rounded-[var(--radius-md)] border border-border bg-secondary/40 p-4 text-left transition-all hover:border-ring/50 hover:bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-ring/50",
+        "w-full cursor-pointer rounded-[var(--radius-md)] border border-border bg-secondary/40 p-4 text-left transition-all hover:border-ring/50 hover:bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-ring/50",
         isSelected &&
           "border-ring bg-secondary/60 shadow-[0_0_0_1px_var(--color-ring)]",
         className

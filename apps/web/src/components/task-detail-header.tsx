@@ -46,8 +46,8 @@ function TaskDetailHeader({
 
     if (connectionError) {
       return (
-        <span className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-2 py-1 font-medium text-destructive text-xs">
-          <span className="h-2 w-2 rounded-full bg-destructive" />
+        <span className="flex items-center gap-1.5 rounded-full bg-red-500/10 px-2 py-1 font-normal text-red-500 text-xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
           Error
         </span>
       );
@@ -55,8 +55,8 @@ function TaskDetailHeader({
 
     if (isConnecting) {
       return (
-        <span className="flex items-center gap-1.5 rounded-full bg-yellow-500/20 px-2 py-1 font-medium text-xs text-yellow-400">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-yellow-500" />
+        <span className="flex items-center gap-1.5 rounded-full bg-yellow-500/10 px-2 py-1 font-normal text-xs text-yellow-500">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-yellow-500" />
           Connecting...
         </span>
       );
@@ -64,16 +64,16 @@ function TaskDetailHeader({
 
     if (isConnected) {
       return (
-        <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-1 font-medium text-primary text-xs">
-          <span className="h-2 w-2 rounded-full bg-primary" />
+        <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1 font-normal text-emerald-500 text-xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
           Live
         </span>
       );
     }
 
     return (
-      <span className="flex items-center gap-1.5 rounded-full bg-muted px-2 py-1 font-medium text-muted-foreground text-xs">
-        <span className="h-2 w-2 rounded-full bg-muted-foreground" />
+      <span className="flex items-center gap-1.5 rounded-full bg-gray-500/10 px-2 py-1 font-normal text-gray-500 text-xs">
+        <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
         Disconnected
       </span>
     );
