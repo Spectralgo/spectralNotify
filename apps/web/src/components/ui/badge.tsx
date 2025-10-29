@@ -4,18 +4,28 @@ import type * as React from "react";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-full border font-medium text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center justify-center rounded-full border font-normal text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
+          "border-blue-500/20 bg-blue-500/10 text-blue-500 shadow-sm",
         active:
-          "border-primary/20 bg-primary/10 text-primary shadow-sm",
-        completed: "border-border bg-muted text-muted-foreground shadow-sm",
-        failed: "border-destructive/20 bg-destructive/10 text-destructive shadow-sm",
-        count: "border-border bg-secondary/40 text-muted-foreground shadow-sm",
-        outline: "border-current text-foreground",
+          "border-blue-500/20 bg-blue-500/10 text-blue-500 shadow-sm",
+        success:
+          "border-emerald-500/20 bg-emerald-500/10 text-emerald-500 shadow-sm",
+        completed:
+          "border-emerald-500/20 bg-emerald-500/10 text-emerald-500 shadow-sm",
+        failed:
+          "border-red-500/20 bg-red-500/10 text-red-500 shadow-sm",
+        destructive:
+          "border-red-500/20 bg-red-500/10 text-red-500 shadow-sm",
+        secondary:
+          "border-gray-500/20 bg-gray-500/10 text-gray-500 shadow-sm",
+        count:
+          "border-border/30 bg-secondary/20 text-muted-foreground shadow-sm",
+        outline:
+          "border-border/30 text-foreground",
       },
       size: {
         default: "px-2.5 py-0.5",
