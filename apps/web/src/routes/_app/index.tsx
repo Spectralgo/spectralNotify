@@ -47,7 +47,7 @@ function HomeComponent() {
           <h2 className="mb-4 font-semibold text-lg">API Status</h2>
           <div className="flex items-center gap-2">
             <div
-              className={`h-3 w-3 rounded-full ${healthCheck.data ? "bg-emerald-500" : "bg-red-500"}`}
+              className={`h-3 w-3 rounded-full ${healthCheck.data ? "bg-primary" : "bg-destructive"}`}
             />
             <span className="text-sm">
               {healthCheck.isLoading

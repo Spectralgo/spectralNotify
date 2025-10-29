@@ -53,9 +53,9 @@ function LiveTasksPage() {
       <div className="flex w-full max-w-2xl flex-col gap-4">
         {/* Search Bar */}
         <div className="relative">
-          <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-gray-400" />
+          <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
           <Input
-            className="border-white/10 bg-gray-800/50 pl-10 placeholder:text-gray-500"
+            className="pl-10"
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by Task ID..."
             value={searchQuery}
@@ -66,7 +66,7 @@ function LiveTasksPage() {
         <div className="flex-1 space-y-2 overflow-y-auto">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
-              <p className="text-gray-400 text-sm">Loading tasks...</p>
+              <p className="text-muted-foreground text-sm">Loading tasks...</p>
             </div>
           ) : tasks.length === 0 ? (
             <EmptyState

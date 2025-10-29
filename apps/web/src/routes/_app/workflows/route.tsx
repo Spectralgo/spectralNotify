@@ -31,7 +31,12 @@ function WorkflowsLayoutComponent() {
     <WorkflowsContext.Provider
       value={{ selectedWorkflowId, setSelectedWorkflowId }}
     >
-      <Outlet />
+      <div className="flex h-[calc(100vh-4rem)] w-full gap-4 p-4">
+        {/* Middle Pane - Workflow List */}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Outlet />
+        </div>
+      </div>
     </WorkflowsContext.Provider>
   );
 }
