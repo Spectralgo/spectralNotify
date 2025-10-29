@@ -21,6 +21,7 @@
     "db:generate": "turbo -F @spectralNotify/db db:generate",
     "counter:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.counter.ts",
     "task:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.task.ts",
+    "workflow:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.workflow.ts",
     "deploy": "alchemy deploy",
     "destroy": "alchemy destroy"
   },
