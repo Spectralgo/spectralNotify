@@ -4,6 +4,10 @@ import { api } from "@/utils/orpc";
 
 export const Route = createFileRoute("/_app/")({
   component: HomeComponent,
+  staticData: {
+    title: "Home",
+    breadcrumb: "Home"
+  }
 });
 
 const TITLE_TEXT = `

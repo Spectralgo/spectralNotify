@@ -20,6 +20,10 @@ export function useWorkflowsContext() {
 
 export const Route = createFileRoute("/_app/workflows")({
   component: WorkflowsLayoutComponent,
+  staticData: {
+    title: "Workflows",
+    breadcrumb: "Workflows",
+  },
 });
 
 function WorkflowsLayoutComponent() {
@@ -31,7 +35,7 @@ function WorkflowsLayoutComponent() {
     <WorkflowsContext.Provider
       value={{ selectedWorkflowId, setSelectedWorkflowId }}
     >
-      <div className="flex h-[calc(100vh-4rem)] w-full gap-4 p-4">
+      <div className="flex h-full w-full gap-4 p-4">
         {/* Middle Pane - Workflow List */}
         <div className="flex min-w-0 flex-1 flex-col">
           <Outlet />

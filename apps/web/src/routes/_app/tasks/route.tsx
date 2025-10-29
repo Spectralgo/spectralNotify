@@ -18,6 +18,10 @@ export function useTasksContext() {
 
 export const Route = createFileRoute("/_app/tasks")({
   component: TasksLayoutComponent,
+  staticData: {
+    title: "Tasks",
+    breadcrumb: "Tasks"
+  }
 });
 
 function TasksLayoutComponent() {
@@ -25,7 +29,7 @@ function TasksLayoutComponent() {
 
   return (
     <TasksContext.Provider value={{ selectedTaskId, setSelectedTaskId }}>
-      <div className="flex h-[calc(100vh-4rem)] w-full gap-4 p-4">
+      <div className="flex h-full w-full gap-4 p-4">
         {/* Middle Pane - Task List */}
         <div className="flex min-w-0 flex-1 flex-col">
           <Outlet />

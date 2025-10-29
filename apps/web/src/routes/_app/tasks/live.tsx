@@ -50,7 +50,7 @@ function LiveTasksPage() {
   return (
     <div className="flex h-full gap-4">
       {/* Task List */}
-      <div className="flex w-full max-w-2xl flex-col gap-4">
+      <div className="flex w-full flex-col gap-4 lg:w-1/3">
         {/* Search Bar */}
         <div className="relative">
           <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
@@ -96,7 +96,7 @@ function LiveTasksPage() {
       </div>
 
       {/* Task Detail Panel */}
-      <div className="flex-1">
+      <div className="flex-1 lg:w-2/3">
         <TaskDetailPanel
           connectionError={connectionError}
           isConnected={isConnected}

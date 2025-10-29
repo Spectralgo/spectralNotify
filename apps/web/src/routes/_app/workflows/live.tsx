@@ -52,8 +52,8 @@ function LiveWorkflowsPage() {
 
   return (
     <div className="flex h-full gap-4">
-      {/* Workflow List */}
-      <div className="flex w-full max-w-2xl flex-col gap-4">
+      {/* Workflow List - 1/3 width */}
+      <div className="flex w-full flex-col gap-4 lg:w-1/3">
         {/* Search Bar */}
         <div className="relative">
           <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
@@ -98,8 +98,8 @@ function LiveWorkflowsPage() {
         </div>
       </div>
 
-      {/* Workflow Detail Panel */}
-      <div className="flex-1">
+      {/* Workflow Detail Panel - 2/3 width */}
+      <div className="flex-1 lg:w-2/3">
         <WorkflowDetailPanel
           connectionError={connectionError}
           isConnected={isConnected}
@@ -118,6 +118,7 @@ function LiveWorkflowsPage() {
                   phases: selectedWorkflow.phases,
                   events: selectedWorkflow.events,
                   lastUpdate: formatRelativeTime(selectedWorkflow.updatedAt),
+                  metadata: selectedWorkflow.metadata,
                 }
               : undefined
           }

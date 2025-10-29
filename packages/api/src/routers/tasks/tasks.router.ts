@@ -3,8 +3,8 @@ import {
   apiKeyProcedure,
   protectedProcedure,
   publicProcedure,
-  withIdempotency,
 } from "../../index";
+import { withIdempotency } from "../../middleware/idempotency";
 import { withIdempotency as withIdempotencySchema } from "../../schemas/idempotency";
 import { notifyMetadataSchema } from "../../types/metadata";
 import {

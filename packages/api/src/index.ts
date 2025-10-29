@@ -27,7 +27,9 @@ export const protectedProcedure = publicProcedure.use(requireAuth);
 export const apiKeyProcedure = publicProcedure.use(requireApiKey);
 
 // Middleware
-export { withIdempotency } from "./middleware/idempotency";
+// Note: Server-only middleware (like idempotency) should be imported directly
+// from their modules by server routers to avoid pulling server code into the
+// browser bundle.
 
 // Types
 export type { IdempotencyMetadata, MutationResponse } from "./types/responses";

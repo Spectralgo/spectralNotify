@@ -85,29 +85,27 @@ export type PurposeInfo = z.infer<typeof purposeInfoSchema>;
  * All fields are optional to maintain backwards compatibility.
  * Use .passthrough() to allow additional custom fields.
  */
-export const notifyMetadataSchema = z
-	.object({
-		/**
-		 * Author information (who created this task)
-		 */
-		author: authorInfoSchema.optional(),
+export const notifyMetadataSchema = z.looseObject({
+	/**
+	 * Author information (who created this task)
+	 */
+	author: authorInfoSchema.optional(),
 
-		/**
-		 * Origin information (where this task came from)
-		 */
-		origin: originInfoSchema.optional(),
+	/**
+	 * Origin information (where this task came from)
+	 */
+	origin: originInfoSchema.optional(),
 
-		/**
-		 * Purpose information (what this task accomplishes)
-		 */
-		purpose: purposeInfoSchema.optional(),
+	/**
+	 * Purpose information (what this task accomplishes)
+	 */
+	purpose: purposeInfoSchema.optional(),
 
-		/**
-		 * Optional tags for categorization (max 12 tags)
-		 */
-		tags: z.array(z.string()).max(12).optional(),
-	})
-	.passthrough(); // Allow additional custom fields for flexibility
+	/**
+	 * Optional tags for categorization (max 12 tags)
+	 */
+	tags: z.array(z.string()).max(12).optional(),
+});
 
 export type NotifyMetadata = z.infer<typeof notifyMetadataSchema>;
 

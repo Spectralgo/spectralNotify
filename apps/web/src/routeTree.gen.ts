@@ -15,6 +15,7 @@ import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as SuperAdminIndexRouteImport } from './routes/super-admin/index'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as SuperAdminApiStatusRouteImport } from './routes/super-admin/api-status'
+import { Route as AuthSignOutRouteImport } from './routes/_auth/sign-out'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as SuperAdminTasksRouteRouteImport } from './routes/super-admin/tasks/route'
@@ -57,6 +58,11 @@ const SuperAdminApiStatusRoute = SuperAdminApiStatusRouteImport.update({
   id: '/api-status',
   path: '/api-status',
   getParentRoute: () => SuperAdminRouteRoute,
+} as any)
+const AuthSignOutRoute = AuthSignOutRouteImport.update({
+  id: '/sign-out',
+  path: '/sign-out',
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/tasks': typeof SuperAdminTasksRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/login': typeof AuthLoginRoute
+  '/sign-out': typeof AuthSignOutRoute
   '/super-admin/api-status': typeof SuperAdminApiStatusRoute
   '/': typeof AppIndexRoute
   '/super-admin/': typeof SuperAdminIndexRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/workflows': typeof AppWorkflowsRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/login': typeof AuthLoginRoute
+  '/sign-out': typeof AuthSignOutRoute
   '/super-admin/api-status': typeof SuperAdminApiStatusRoute
   '/': typeof AppIndexRoute
   '/super-admin': typeof SuperAdminIndexRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/super-admin/tasks': typeof SuperAdminTasksRouteRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/login': typeof AuthLoginRoute
+  '/_auth/sign-out': typeof AuthSignOutRoute
   '/super-admin/api-status': typeof SuperAdminApiStatusRoute
   '/_app/': typeof AppIndexRoute
   '/super-admin/': typeof SuperAdminIndexRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/super-admin/tasks'
     | '/dashboard'
     | '/login'
+    | '/sign-out'
     | '/super-admin/api-status'
     | '/'
     | '/super-admin/'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/workflows'
     | '/dashboard'
     | '/login'
+    | '/sign-out'
     | '/super-admin/api-status'
     | '/'
     | '/super-admin'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/super-admin/tasks'
     | '/_app/dashboard'
     | '/_auth/login'
+    | '/_auth/sign-out'
     | '/super-admin/api-status'
     | '/_app/'
     | '/super-admin/'
@@ -300,6 +312,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/super-admin/api-status'
       preLoaderRoute: typeof SuperAdminApiStatusRouteImport
       parentRoute: typeof SuperAdminRouteRoute
+    }
+    '/_auth/sign-out': {
+      id: '/_auth/sign-out'
+      path: '/sign-out'
+      fullPath: '/sign-out'
+      preLoaderRoute: typeof AuthSignOutRouteImport
+      parentRoute: typeof AuthRouteRoute
     }
     '/_auth/login': {
       id: '/_auth/login'
@@ -453,10 +472,12 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
 
 interface AuthRouteRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
+  AuthSignOutRoute: typeof AuthSignOutRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
+  AuthSignOutRoute: AuthSignOutRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
