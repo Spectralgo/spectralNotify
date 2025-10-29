@@ -6,4 +6,7 @@ export default defineConfig({
   outDir: "./dist",
   clean: true,
   noExternal: [/@spectralNotify\/.*/],
+  loader: {
+    ".sql": "text", // Load SQL files as text strings
+  },
 });

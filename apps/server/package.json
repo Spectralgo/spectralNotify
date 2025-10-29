@@ -10,7 +10,9 @@
     "deploy": "alchemy deploy",
     "destroy": "alchemy destroy",
     "counter:generate": "drizzle-kit generate --config=drizzle.config.counter.ts",
-    "counter:migrate": "./scripts/counter-migrate.sh"
+    "counter:migrate": "./scripts/counter-migrate.sh",
+    "task:generate": "drizzle-kit generate --config=drizzle.config.task.ts",
+    "workflow:generate": "drizzle-kit generate --config=drizzle.config.workflow.ts"
   },
   "dependencies": {
     "@orpc/openapi": "catalog:",

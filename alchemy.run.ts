@@ -44,6 +44,12 @@ const task = DurableObjectNamespace("task", {
   sqlite: true,
 });
 
+// Create Workflow Durable Object namespace with SQLite storage
+const workflow = DurableObjectNamespace("workflow", {
+  className: "Workflow",
+  sqlite: true,
+});
+
 // Create server first to get its URL for the web build
 export const server = await Worker("server", {
   cwd: "apps/server",
@@ -60,11 +66,14 @@ export const server = await Worker("server", {
     DB: db,
     COUNTER: counter,
     TASK: task,
+    WORKFLOW: workflow,
     CORS_ORIGIN: "",
     BETTER_AUTH_SECRET: alchemy.secret(process.env.BETTER_AUTH_SECRET),
     BETTER_AUTH_URL: "",
     ALLOWED_EMAIL: alchemy.secret(process.env.ALLOWED_EMAIL),
-    SPECTRAL_NOTIFY_API_KEY: alchemy.secret(process.env.SPECTRAL_NOTIFY_API_KEY),
+    SPECTRAL_NOTIFY_API_KEY: alchemy.secret(
+      process.env.SPECTRAL_NOTIFY_API_KEY
+    ),
   },
   dev: {
     port: 8094,
