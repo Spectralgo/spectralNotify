@@ -46,8 +46,8 @@ function TaskDetailHeader({
 
     if (connectionError) {
       return (
-        <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-1 font-medium text-red-400 text-xs">
-          <span className="h-2 w-2 rounded-full bg-red-500" />
+        <span className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-2 py-1 font-medium text-destructive text-xs">
+          <span className="h-2 w-2 rounded-full bg-destructive" />
           Error
         </span>
       );
@@ -64,16 +64,16 @@ function TaskDetailHeader({
 
     if (isConnected) {
       return (
-        <span className="flex items-center gap-1.5 rounded-full bg-green-500/20 px-2 py-1 font-medium text-green-400 text-xs">
-          <span className="h-2 w-2 rounded-full bg-green-500" />
+        <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-1 font-medium text-primary text-xs">
+          <span className="h-2 w-2 rounded-full bg-primary" />
           Live
         </span>
       );
     }
 
     return (
-      <span className="flex items-center gap-1.5 rounded-full bg-gray-500/20 px-2 py-1 font-medium text-gray-400 text-xs">
-        <span className="h-2 w-2 rounded-full bg-gray-500" />
+      <span className="flex items-center gap-1.5 rounded-full bg-muted px-2 py-1 font-medium text-muted-foreground text-xs">
+        <span className="h-2 w-2 rounded-full bg-muted-foreground" />
         Disconnected
       </span>
     );
@@ -82,7 +82,7 @@ function TaskDetailHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 border-white/10 border-b pb-4",
+        "flex flex-col gap-4 border-border border-b pb-4",
         className
       )}
       data-slot="task-detail-header"
@@ -91,7 +91,7 @@ function TaskDetailHeader({
       {/* Task ID and Status */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h2 className="font-bold font-mono text-2xl text-white tracking-tight">
+          <h2 className="font-bold font-mono text-2xl text-foreground tracking-tight">
             {taskId}
           </h2>
           <TaskStatusPill status={status} />
@@ -113,12 +113,12 @@ function TaskDetailHeader({
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {lastUpdate && (
-            <p className="text-gray-400 text-sm">Last updated {lastUpdate}</p>
+            <p className="text-muted-foreground text-sm">Last updated {lastUpdate}</p>
           )}
           {getConnectionStatus()}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-gray-400 text-sm">
+          <span className="text-muted-foreground text-sm">
             {isLive ? "WebSocket" : "Polling"}
           </span>
           <Switch

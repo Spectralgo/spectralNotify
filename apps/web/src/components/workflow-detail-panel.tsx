@@ -43,7 +43,7 @@ function WorkflowDetailPanel({
     return (
       <div
         className={cn(
-          "flex h-full items-center justify-center rounded-xl border border-white/10 bg-gray-800/50 backdrop-blur-xl",
+          "flex h-full items-center justify-center rounded-[var(--radius-lg)] border border-border bg-card backdrop-blur-xl",
           className
         )}
         data-slot="workflow-detail-panel"
@@ -62,7 +62,7 @@ function WorkflowDetailPanel({
   return (
     <div
       className={cn(
-        "flex h-full flex-col gap-6 rounded-xl border border-white/10 bg-gray-800/50 p-6 backdrop-blur-xl",
+        "flex h-full flex-col gap-6 rounded-[var(--radius-lg)] border border-border bg-card p-6 backdrop-blur-xl",
         className
       )}
       data-slot="workflow-detail-panel"
@@ -72,13 +72,13 @@ function WorkflowDetailPanel({
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between">
           <div className="flex flex-col gap-2">
-            <h2 className="font-mono font-semibold text-lg text-white">
+            <h2 className="font-mono font-semibold text-lg text-foreground">
               {workflow.id}
             </h2>
             <WorkflowStatusPill status={workflow.status} />
           </div>
           {workflow.lastUpdate && (
-            <span className="text-gray-400 text-xs">{workflow.lastUpdate}</span>
+            <span className="text-muted-foreground text-xs">{workflow.lastUpdate}</span>
           )}
         </div>
 
@@ -86,24 +86,24 @@ function WorkflowDetailPanel({
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm text-white">
+              <span className="font-medium text-sm text-foreground">
                 Overall Progress
               </span>
               {workflow.expectedPhaseCount !== undefined &&
                 workflow.completedPhaseCount !== undefined && (
-                  <span className="text-gray-400 text-xs">
+                  <span className="text-muted-foreground text-xs">
                     ({workflow.completedPhaseCount}/
                     {workflow.expectedPhaseCount} phases)
                   </span>
                 )}
             </div>
-            <span className="font-medium text-sm text-white">
+            <span className="font-medium text-sm text-primary">
               {Math.round(workflow.overallProgress)}%
             </span>
           </div>
-          <Progress className="h-3" value={workflow.overallProgress} />
+          <Progress className="h-[6px]" value={workflow.overallProgress} />
           {workflow.activePhaseKey && (
-            <p className="text-gray-400 text-xs">
+            <p className="text-muted-foreground text-xs">
               Active: {workflow.activePhaseKey}
             </p>
           )}
@@ -115,13 +115,13 @@ function WorkflowDetailPanel({
             className={cn(
               "h-2 w-2 rounded-full",
               isConnected
-                ? "bg-emerald-400"
+                ? "bg-primary"
                 : isConnecting
                   ? "animate-pulse bg-yellow-400"
-                  : "bg-gray-500"
+                  : "bg-muted-foreground"
             )}
           />
-          <span className="text-gray-400">
+          <span className="text-muted-foreground">
             {isConnected
               ? "Live updates active"
               : isConnecting
@@ -133,7 +133,7 @@ function WorkflowDetailPanel({
 
       {/* Phase Cards */}
       <div className="flex flex-col gap-3">
-        <h3 className="font-semibold text-sm text-white uppercase tracking-wider">
+        <h3 className="font-semibold text-sm text-foreground uppercase tracking-wider">
           Phases
         </h3>
         <div className="grid gap-3">

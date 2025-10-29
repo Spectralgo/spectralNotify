@@ -37,11 +37,11 @@ const statusIcons: Record<
 };
 
 const statusColors: Record<PhaseStatus, string> = {
-  pending: "text-gray-400 bg-gray-500/10 border-gray-500/20",
-  "in-progress": "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-  success: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-  failed: "text-red-400 bg-red-500/10 border-red-500/20",
-  canceled: "text-orange-400 bg-orange-500/10 border-orange-500/20",
+  pending: "text-muted-foreground bg-muted border-border",
+  "in-progress": "text-primary bg-primary/10 border-primary/20",
+  success: "text-primary bg-primary/10 border-primary/20",
+  failed: "text-destructive bg-destructive/10 border-destructive/20",
+  canceled: "text-muted-foreground bg-muted border-border",
 };
 
 function WorkflowPhaseCard({
@@ -54,7 +54,7 @@ function WorkflowPhaseCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-lg border p-4",
+        "flex flex-col gap-3 rounded-[var(--radius-md)] border p-4",
         statusColors[phase.status],
         className
       )}
@@ -77,7 +77,7 @@ function WorkflowPhaseCard({
 
       {/* Progress bar */}
       <div className="flex items-center gap-2">
-        <Progress className="h-2 flex-1" value={phase.progress} />
+        <Progress className="h-[6px] flex-1" value={phase.progress} />
         <span className="whitespace-nowrap font-medium text-xs">
           {Math.round(phase.progress)}%
         </span>

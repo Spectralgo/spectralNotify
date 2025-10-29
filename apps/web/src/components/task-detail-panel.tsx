@@ -36,7 +36,7 @@ function TaskDetailPanel({
     return (
       <div
         className={cn(
-          "flex h-full items-center justify-center rounded-xl border border-white/10 bg-gray-800/50 backdrop-blur-xl",
+          "flex h-full items-center justify-center rounded-[var(--radius-lg)] border border-border bg-card backdrop-blur-xl",
           className
         )}
         data-slot="task-detail-panel"
@@ -55,7 +55,7 @@ function TaskDetailPanel({
   return (
     <div
       className={cn(
-        "flex h-full flex-col gap-6 rounded-xl border border-white/10 bg-gray-800/50 p-6 backdrop-blur-xl",
+        "flex h-full flex-col gap-6 rounded-[var(--radius-lg)] border border-border bg-card p-6 backdrop-blur-xl",
         className
       )}
       data-slot="task-detail-panel"

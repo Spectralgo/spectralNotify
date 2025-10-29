@@ -27,33 +27,30 @@ function TaskListItem({
   return (
     <motion.button
       className={cn(
-        "group relative w-full rounded-lg border bg-gray-800/50 p-4 text-left transition-all hover:border-emerald-500/50 hover:bg-gray-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
+        "group relative w-full rounded-[var(--radius-md)] border border-border bg-secondary/40 p-4 text-left transition-all hover:border-ring/50 hover:bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-ring/50",
         isSelected &&
-          "border-emerald-500 bg-gray-800/80 shadow-emerald-500/10 shadow-lg",
-        !isSelected && "border-white/10",
+          "border-ring bg-secondary/60 shadow-[0_0_0_1px_var(--color-ring)]",
         className
       )}
       data-slot="task-list-item"
       type="button"
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
       {...props}
     >
       {/* Left border indicator when selected */}
       {isSelected && (
-        <div className="absolute inset-y-0 left-0 w-1 rounded-l-lg bg-gradient-to-b from-emerald-400 to-teal-500" />
+        <div className="absolute inset-y-0 left-0 w-1 rounded-l-[var(--radius-md)] bg-primary" />
       )}
 
       <div className="flex flex-col gap-3">
         {/* Header: Task ID, Status, Time */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-mono font-semibold text-sm text-white">
+            <span className="font-mono font-semibold text-sm text-foreground">
               {taskId}
             </span>
             <TaskStatusPill size="sm" status={status} />
           </div>
-          <span className="whitespace-nowrap text-gray-400 text-xs">
+          <span className="whitespace-nowrap text-muted-foreground text-xs">
             {relativeTime}
           </span>
         </div>
@@ -61,8 +58,8 @@ function TaskListItem({
         {/* Progress bar (if available) */}
         {progress !== undefined && (
           <div className="flex items-center gap-2">
-            <Progress className="h-1.5" value={progress} />
-            <span className="whitespace-nowrap font-medium text-emerald-400 text-xs">
+            <Progress className="h-[6px]" value={progress} />
+            <span className="whitespace-nowrap font-medium text-primary text-xs">
               {Math.round(progress)}%
             </span>
           </div>
@@ -70,7 +67,7 @@ function TaskListItem({
 
         {/* Last event snippet */}
         {lastEvent && (
-          <p className="line-clamp-1 text-gray-400 text-sm">{lastEvent}</p>
+          <p className="line-clamp-1 text-muted-foreground text-sm">{lastEvent}</p>
         )}
       </div>
     </motion.button>

@@ -308,9 +308,9 @@ export function CounterDetailPanel({
                   y: 0,
                   color: valueChangeDirection
                     ? valueChangeDirection === "up"
-                      ? "rgb(34 197 94)"
-                      : "rgb(239 68 68)"
-                    : "rgb(255 255 255)",
+                      ? "hsl(var(--primary))"
+                      : "hsl(var(--destructive))"
+                    : "hsl(var(--foreground))",
                 }}
                 className="font-bold text-6xl"
                 exit={{ scale: 0.8, opacity: 0 }}

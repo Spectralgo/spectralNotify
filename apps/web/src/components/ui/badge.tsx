@@ -11,10 +11,10 @@ const badgeVariants = cva(
         default:
           "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
         active:
-          "border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-sm",
-        completed: "border-gray-500/20 bg-gray-500/10 text-gray-400 shadow-sm",
-        failed: "border-red-500/20 bg-red-500/10 text-red-400 shadow-sm",
-        count: "border-white/10 bg-white/5 text-white/70 shadow-sm",
+          "border-primary/20 bg-primary/10 text-primary shadow-sm",
+        completed: "border-border bg-muted text-muted-foreground shadow-sm",
+        failed: "border-destructive/20 bg-destructive/10 text-destructive shadow-sm",
+        count: "border-border bg-secondary/40 text-muted-foreground shadow-sm",
         outline: "border-current text-foreground",
       },
       size: {

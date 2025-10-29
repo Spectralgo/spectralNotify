@@ -62,7 +62,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <h1 className="relative inline-flex items-baseline font-bold text-xl">
             <span className="tracking-tight">
               Spectral
-              <span className="bg-gradient-to-tr from-emerald-400 to-teal-600 bg-clip-text text-transparent">
+              <span className="bg-primary bg-clip-text text-transparent">
                 Notify
               </span>
             </span>

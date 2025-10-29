@@ -18,23 +18,23 @@ const statusConfig: Record<
 > = {
   pending: {
     label: "Pending",
-    className: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+    className: "bg-muted text-muted-foreground border-border",
   },
   "in-progress": {
     label: "In Progress",
-    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    className: "bg-primary/10 text-primary border-primary/20",
   },
   success: {
     label: "Success",
-    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    className: "bg-primary/10 text-primary border-primary/20",
   },
   failed: {
     label: "Failed",
-    className: "bg-red-500/10 text-red-400 border-red-500/20",
+    className: "bg-destructive/10 text-destructive border-destructive/20",
   },
   canceled: {
     label: "Canceled",
-    className: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+    className: "bg-muted text-muted-foreground border-border",
   },
 };
 

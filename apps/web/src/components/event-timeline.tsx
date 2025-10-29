@@ -34,13 +34,13 @@ const eventIcons: Record<
 };
 
 const eventColors: Record<EventType, string> = {
-  log: "text-gray-400 bg-gray-500/10",
-  progress: "text-emerald-400 bg-emerald-500/10",
-  error: "text-red-400 bg-red-500/10",
-  success: "text-emerald-400 bg-emerald-500/10",
-  "phase-progress": "text-emerald-400 bg-emerald-500/10",
-  "workflow-progress": "text-emerald-400 bg-emerald-500/10",
-  cancel: "text-orange-400 bg-orange-500/10",
+  log: "text-muted-foreground bg-muted",
+  progress: "text-primary bg-primary/10",
+  error: "text-destructive bg-destructive/10",
+  success: "text-primary bg-primary/10",
+  "phase-progress": "text-primary bg-primary/10",
+  "workflow-progress": "text-primary bg-primary/10",
+  cancel: "text-muted-foreground bg-muted",
 };
 
 function formatTimestamp(date: Date): string {
@@ -81,7 +81,7 @@ function EventTimeline({ events, className, ...props }: EventTimelineProps) {
       data-slot="event-timeline"
       {...props}
     >
-      <h3 className="font-semibold text-sm text-white uppercase tracking-wider">
+      <h3 className="font-semibold text-sm text-foreground uppercase tracking-wider">
         Event Timeline
       </h3>
       <div className="space-y-2">
@@ -91,7 +91,7 @@ function EventTimeline({ events, className, ...props }: EventTimelineProps) {
             <motion.div
               animate={{ opacity: 1, x: 0 }}
               className={cn(
-                "flex gap-3 rounded-lg border border-white/10 bg-gray-800/30 p-3",
+                "flex gap-3 rounded-[var(--radius-md)] border border-border bg-secondary/40 p-3",
                 eventColors[event.type]
               )}
               initial={{ opacity: 0, x: -20 }}
@@ -115,7 +115,7 @@ function EventTimeline({ events, className, ...props }: EventTimelineProps) {
                 {/* Progress bar for progress events */}
                 {(event.type === "progress" || event.type === "phase-progress" || event.type === "workflow-progress") && event.progress !== undefined && (
                   <div className="flex items-center gap-2">
-                    <Progress className="h-1" value={event.progress} />
+                    <Progress className="h-[6px]" value={event.progress} />
                     <span className="whitespace-nowrap font-medium text-xs">
                       {Math.round(event.progress)}%
                     </span>

@@ -63,7 +63,7 @@ export default function SignUpForm({
   });
 
   return (
-    <div className="relative isolate flex min-h-screen items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-900">
+    <div className="relative isolate flex min-h-screen items-center justify-center overflow-y-auto overflow-x-hidden bg-background">
       {/* Background pattern */}
       <svg
         aria-hidden="true"
@@ -101,7 +101,7 @@ export default function SignUpForm({
         className="-z-10 -translate-x-1/2 absolute top-0 left-[calc(50%-30rem)] transform-gpu blur-3xl"
       >
         <div
-          className="aspect-[1108/632] w-[69.25rem] bg-gradient-to-r from-emerald-400 to-teal-500 opacity-20"
+          className="aspect-[1108/632] w-[69.25rem] bg-primary opacity-20"
           style={{
             clipPath:
               "polygon(73.6% 51.7%, 91.7% 11.8%, 100% 46.4%, 97.4% 82.2%, 92.5% 84.9%, 75.7% 64%, 55.3% 47.5%, 46.5% 49.4%, 45% 62.9%, 50.3% 87.2%, 21.3% 64.1%, 0.1% 100%, 5.4% 51.1%, 21.4% 63.9%, 58.9% 0.2%, 73.6% 51.7%)",
@@ -120,16 +120,16 @@ export default function SignUpForm({
           {/* Logo at top */}
           <div className="mb-8 block text-center">
             <h1 className="relative inline-flex items-baseline font-bold text-3xl">
-              <span className="text-white tracking-tight">
+              <span className="text-foreground tracking-tight">
                 Spectral
-                <span className="bg-gradient-to-tr from-emerald-400 to-teal-600 bg-clip-text text-transparent">
+                <span className="bg-primary bg-clip-text text-transparent">
                   Notify
                 </span>
               </span>
             </h1>
           </div>
 
-          <Card className="overflow-hidden rounded-xl border border-white/10 bg-gray-800/50 shadow-2xl backdrop-blur-xl">
+          <Card className="overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card shadow-2xl backdrop-blur-xl">
             <CardContent className="p-8">
               <form
                 onSubmit={(e) => {
@@ -140,10 +140,10 @@ export default function SignUpForm({
               >
                 <div className="flex flex-col gap-6">
                   <div className="text-center">
-                    <h2 className="font-bold text-2xl text-white tracking-tight">
+                    <h2 className="font-bold text-2xl text-foreground tracking-tight">
                       Create an account
                     </h2>
-                    <p className="mt-2 text-gray-400">
+                    <p className="mt-2 text-muted-foreground">
                       Get started with your new account
                     </p>
                   </div>
@@ -153,14 +153,14 @@ export default function SignUpForm({
                       {(field) => (
                         <div className="grid gap-2">
                           <Label
-                            className="font-medium text-gray-200 text-sm"
+                            className="font-medium text-foreground text-sm"
                             htmlFor={field.name}
                           >
                             Full Name
                           </Label>
                           <Input
                             autoComplete="name"
-                            className="min-h-[44px] border-white/10 bg-white/5 text-base text-white placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
+                            className="min-h-[44px]"
                             id={field.name}
                             name={field.name}
                             onBlur={field.handleBlur}
@@ -172,7 +172,7 @@ export default function SignUpForm({
                           />
                           {field.state.meta.errors.map((err) => (
                             <p
-                              className="text-red-400 text-sm"
+                              className="text-destructive text-sm"
                               key={err?.message}
                             >
                               {err?.message}
@@ -186,14 +186,14 @@ export default function SignUpForm({
                       {(field) => (
                         <div className="grid gap-2">
                           <Label
-                            className="font-medium text-gray-200 text-sm"
+                            className="font-medium text-foreground text-sm"
                             htmlFor={field.name}
                           >
                             Email
                           </Label>
                           <Input
                             autoComplete="email"
-                            className="min-h-[44px] border-white/10 bg-white/5 text-base text-white placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
+                            className="min-h-[44px]"
                             id={field.name}
                             name={field.name}
                             onBlur={field.handleBlur}
@@ -205,7 +205,7 @@ export default function SignUpForm({
                           />
                           {field.state.meta.errors.map((err) => (
                             <p
-                              className="text-red-400 text-sm"
+                              className="text-destructive text-sm"
                               key={err?.message}
                             >
                               {err?.message}
@@ -219,14 +219,14 @@ export default function SignUpForm({
                       {(field) => (
                         <div className="grid gap-2">
                           <Label
-                            className="font-medium text-gray-200 text-sm"
+                            className="font-medium text-foreground text-sm"
                             htmlFor={field.name}
                           >
                             Password
                           </Label>
                           <Input
                             autoComplete="new-password"
-                            className="min-h-[44px] border-white/10 bg-white/5 text-base text-white placeholder:text-gray-500 focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
+                            className="min-h-[44px]"
                             id={field.name}
                             name={field.name}
                             onBlur={field.handleBlur}
@@ -242,7 +242,7 @@ export default function SignUpForm({
                           </p>
                           {field.state.meta.errors.map((err) => (
                             <p
-                              className="text-red-400 text-sm"
+                              className="text-destructive text-sm"
                               key={err?.message}
                             >
                               {err?.message}
@@ -258,7 +258,7 @@ export default function SignUpForm({
                   <form.Subscribe>
                     {(state) => (
                       <AuthLoadingButton
-                        className="min-h-[44px] w-full bg-emerald-600 font-semibold text-white hover:scale-[1.02] hover:bg-emerald-700 hover:shadow-lg active:scale-[0.98]"
+                        className="min-h-[44px] w-full"
                         disabled={!state.canSubmit || state.isSubmitting}
                         isLoading={state.isSubmitting}
                         loadingText="Creating account..."
@@ -274,10 +274,10 @@ export default function SignUpForm({
           </Card>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-400 text-sm">
+            <p className="text-muted-foreground text-sm">
               Already have an account?{" "}
               <Button
-                className="h-auto p-0 text-emerald-400 transition-colors hover:text-emerald-300"
+                className="h-auto p-0 text-primary transition-colors hover:text-emerald-300"
                 onClick={onSwitchToSignIn}
                 variant="link"
               >

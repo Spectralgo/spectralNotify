@@ -20,20 +20,16 @@ function Progress({
 
   return (
     <div
-      aria-valuemax={max}
-      aria-valuemin={0}
-      aria-valuenow={value}
       className={cn(
-        "relative h-2 w-full overflow-hidden rounded-full border border-white/10 bg-gray-800/50",
+        "relative h-[6px] w-full overflow-hidden rounded-full border border-border bg-border/30",
         className
       )}
       data-slot="progress"
-      role="progressbar"
       {...props}
     >
       <motion.div
         animate={{ width: `${percentage}%` }}
-        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
+        className="h-full rounded-full bg-primary"
         initial={{ width: "0%" }}
         transition={{
           type: "spring",
@@ -42,7 +38,7 @@ function Progress({
         }}
       />
       {showLabel && (
-        <span className="absolute inset-0 flex items-center justify-center font-medium text-white text-xs">
+        <span className="absolute inset-0 flex items-center justify-center font-medium text-foreground text-xs">
           {Math.round(percentage)}%
         </span>
       )}
