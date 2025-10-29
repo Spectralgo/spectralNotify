@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
+import { idempotencyKeys } from "@spectralNotify/db";
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { idempotencyKeys } from "@spectralNotify/db";
 import { o } from "../orpc";
 
 /**
@@ -56,20 +56,27 @@ export const withIdempotency = o.middleware(async ({ context, next }) => {
 
   // If key exists and not expired, return cached response with metadata
   if (existing) {
-    console.log(`[Idempotency] Returning cached response for key: ${idempotencyKey.substring(0, 8)}...`);
+    console.log(
+      `[Idempotency] Returning cached response for key: ${idempotencyKey.substring(0, 8)}...`
+    );
     const cachedResponse = JSON.parse(existing.response);
+    // Return with proper output structure for OpenAPIHandler
     return {
-      ...cachedResponse,
-      __idempotency: {
-        cached: true,
-        cachedAt: existing.createdAt,
-        key: idempotencyKey.substring(0, 8),
-      }
+      output: {
+        ...cachedResponse,
+        __idempotency: {
+          cached: true,
+          cachedAt: existing.createdAt,
+          key: idempotencyKey.substring(0, 8),
+        },
+      },
     };
   }
 
   // Process the request
-  console.log(`[Idempotency] Processing new key: ${idempotencyKey.substring(0, 8)}...`);
+  console.log(
+    `[Idempotency] Processing new key: ${idempotencyKey.substring(0, 8)}...`
+  );
   const middlewareResult = await next({ context });
 
   // Extract the actual output from the middleware result
@@ -92,12 +99,15 @@ export const withIdempotency = o.middleware(async ({ context, next }) => {
     console.warn(`[Idempotency] Failed to store key: ${error}`);
   }
 
-  // Return response with metadata (merge with handler output only)
+  // Return response with metadata (preserve middleware structure with output property)
   return {
-    ...handlerOutput,
-    __idempotency: {
-      cached: false,
-      key: idempotencyKey.substring(0, 8),
-    }
+    ...middlewareResult,
+    output: {
+      ...handlerOutput,
+      __idempotency: {
+        cached: false,
+        key: idempotencyKey.substring(0, 8),
+      },
+    },
   };
 });

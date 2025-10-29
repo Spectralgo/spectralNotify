@@ -36,7 +36,9 @@ export const idempotencyMetadataSchema = z.object({
  */
 export function withIdempotency<T extends z.ZodRawShape>(
   baseSchema: z.ZodObject<T>
-): z.ZodObject<T & { __idempotency: z.ZodOptional<typeof idempotencyMetadataSchema> }> {
+): z.ZodObject<
+  T & { __idempotency: z.ZodOptional<typeof idempotencyMetadataSchema> }
+> {
   return baseSchema.extend({
     __idempotency: idempotencyMetadataSchema.optional(),
   });

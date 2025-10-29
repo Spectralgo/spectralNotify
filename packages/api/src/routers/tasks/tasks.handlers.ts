@@ -58,8 +58,20 @@ export async function handleInitializeTask(
     metadata: Record<string, unknown>;
   }
 ): Promise<void> {
+  const receiveTime = Date.now();
+  const timestamp = new Date().toISOString();
+
+  console.log(
+    `[TaskHandler] 📥 RECEIVE Task Create | taskId=${input.taskId} | status=${input.status} | timestamp=${timestamp}`
+  );
+
   const stub = getTaskStub(taskBinding, input.taskId);
   await stub.initialize(input);
+
+  const duration = Date.now() - receiveTime;
+  console.log(
+    `[TaskHandler] ✅ Task Create Handler Complete | taskId=${input.taskId} | duration=${duration}ms`
+  );
 }
 
 /**
@@ -100,8 +112,22 @@ export async function handleUpdateProgress(
   taskId: string,
   progress: number
 ): Promise<EnrichedTaskResponse> {
+  const receiveTime = Date.now();
+  const timestamp = new Date().toISOString();
+
+  console.log(
+    `[TaskHandler] 📥 RECEIVE Progress Update | taskId=${taskId} | progress=${progress}% | timestamp=${timestamp}`
+  );
+
   const stub = getTaskStub(taskBinding, taskId);
-  return await stub.updateProgress(progress);
+  const result = await stub.updateProgress(progress);
+
+  const duration = Date.now() - receiveTime;
+  console.log(
+    `[TaskHandler] ✅ Progress Update Handler Complete | taskId=${taskId} | progress=${progress}% | duration=${duration}ms`
+  );
+
+  return result;
 }
 
 /**

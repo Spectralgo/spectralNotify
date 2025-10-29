@@ -8,3 +8,4 @@ export * from "./schema/auth";
 export * from "./schema/counter-registry";
 export * from "./schema/idempotency-keys";
 export * from "./schema/task-registry";
+export * from "./schema/workflow-registry";

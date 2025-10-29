@@ -16,7 +16,7 @@ const requireAuth = o.middleware(async ({ context, next }) => {
 
 const requireApiKey = o.middleware(async ({ context, next }) => {
   // Require either a user session or valid API key
-  if (!context.session?.user && !context.apiKeyAuthorized) {
+  if (!(context.session?.user || context.apiKeyAuthorized)) {
     throw new ORPCError("UNAUTHORIZED");
   }
   // Pass through all context properties including env bindings
