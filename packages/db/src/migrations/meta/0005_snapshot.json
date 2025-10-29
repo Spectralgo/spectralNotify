@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ed39f727-69dd-4c0f-ad97-3f1f00fff142",
-  "prevId": "29e7a3e4-fa88-47c6-927c-95c0ae68ccfa",
+  "id": "7913d4b4-c919-48d2-993a-b55fa1854eea",
+  "prevId": "ed39f727-69dd-4c0f-ad97-3f1f00fff142",
   "tables": {
     "account": {
       "name": "account",
@@ -452,6 +452,50 @@
         "task_registry_task_id_unique": {
           "name": "task_registry_task_id_unique",
           "columns": ["task_id"],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "workflow_registry": {
+      "name": "workflow_registry",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "workflow_id": {
+          "name": "workflow_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "workflow_registry_workflow_id_unique": {
+          "name": "workflow_registry_workflow_id_unique",
+          "columns": ["workflow_id"],
           "isUnique": true
         }
       },
