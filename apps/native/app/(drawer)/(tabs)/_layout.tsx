@@ -33,6 +33,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="workflow-demo"
+        options={{
+          title: "Workflow",
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon color={color} name="video" />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="two"
         options={{
           title: "Explore",
