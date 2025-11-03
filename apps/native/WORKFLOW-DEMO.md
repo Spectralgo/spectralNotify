@@ -2,7 +2,7 @@
 
 ## Overview
 
-This demo showcases the `@spectralnotify/client` library integrated into the React Native app, simulating a real-world YouTube video transcription workflow with real-time WebSocket updates.
+This demo showcases the `@spectralnotify/react-native` library integrated into the React Native app, simulating a real-world YouTube video transcription workflow with real-time WebSocket updates.
 
 ## What Was Implemented
 
@@ -15,7 +15,7 @@ This demo showcases the `@spectralnotify/client` library integrated into the Rea
 
 ### 2. Files Modified
 
-- **`package.json`** - Added `@spectralnotify/client` dependency
+- **`package.json`** - Added `@spectralnotify/react-native` dependency
 - **`app/_layout.tsx`** - Wrapped app with `SpectralNotifyProvider`
 - **`app/(drawer)/(tabs)/_layout.tsx`** - Added "Workflow" tab with video icon
 
