@@ -1,6 +1,29 @@
-import type { NotifyMetadata, WorkflowPhase } from "@spectralnotify/client";
+import { Platform } from "react-native";
+import { ApiClient, WorkflowApi } from "@spectralnotify/react-native";
+import type { NotifyMetadata, WorkflowPhaseInput } from "@spectralnotify/react-native";
 
-const SERVER_URL = process.env.EXPO_PUBLIC_SERVER_URL || "http://localhost:8094";
+// Android emulator uses 10.0.2.2 to access host machine's localhost
+const getServerUrl = () => {
+  if (process.env.EXPO_PUBLIC_SERVER_URL) {
+    return process.env.EXPO_PUBLIC_SERVER_URL;
+  }
+  // Android emulator localhost mapping
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:8094";
+  }
+  return "http://localhost:8094";
+};
+
+const SERVER_URL = getServerUrl();
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY || "local-dev-key";
+
+// Initialize API client and workflow API
+const apiClient = new ApiClient({
+  serverUrl: SERVER_URL,
+  apiKey: API_KEY,
+});
+
+const workflowApi = new WorkflowApi(apiClient);
 
 /**
  * Sleep utility for timing simulation
@@ -8,10 +31,19 @@ const SERVER_URL = process.env.EXPO_PUBLIC_SERVER_URL || "http://localhost:8094"
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * Generate a unique workflow ID
+ */
+function generateWorkflowId(): string {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `WF-${timestamp}-${random}`;
+}
+
+/**
  * Create a YouTube transcription workflow
  */
 export async function createYouTubeWorkflow(): Promise<string> {
-  const workflowId = "WF-E82F457F";
+  const workflowId = generateWorkflowId();
 
   const metadata: NotifyMetadata = {
     purpose: {
@@ -30,7 +62,8 @@ export async function createYouTubeWorkflow(): Promise<string> {
     },
   };
 
-  const phases: WorkflowPhase[] = [
+  // API expects 'key' not 'phaseKey' in the input schema
+  const phases: WorkflowPhaseInput[] = [
     {
       key: "download",
       label: "Download",
@@ -61,28 +94,21 @@ export async function createYouTubeWorkflow(): Promise<string> {
     },
   ];
 
-  const response = await fetch(`${SERVER_URL}/rpc/workflows.create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      id: workflowId,
-      status: "pending",
-      phases,
-      metadata,
-    }),
-  });
+  try {
+    console.log(`[Simulator] Connecting to ${SERVER_URL}`);
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to create workflow: ${error}`);
+    const result = await workflowApi.create(workflowId, phases, metadata);
+
+    console.log("[Simulator] Workflow created:", result);
+
+    return workflowId;
+  } catch (error) {
+    console.error("[Simulator] Network error:", error);
+    throw new Error(
+      `Cannot connect to server at ${SERVER_URL}. ` +
+      `Make sure the backend is running and accessible from ${Platform.OS === "android" ? "the emulator" : "your device"}.`
+    );
   }
-
-  const data = await response.json();
-  console.log("[Simulator] Workflow created:", data);
-
-  return workflowId;
 }
 
 /**
@@ -93,20 +119,9 @@ async function updatePhaseProgress(
   phase: string,
   progress: number
 ): Promise<void> {
-  const response = await fetch(`${SERVER_URL}/rpc/workflows.updatePhaseProgress`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      workflowId,
-      phase,
-      progress,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
+  try {
+    await workflowApi.updatePhaseProgress(workflowId, phase, progress);
+  } catch (error) {
     console.error(`Failed to update phase progress: ${error}`);
   }
 }
@@ -115,19 +130,9 @@ async function updatePhaseProgress(
  * Complete a phase
  */
 async function completePhase(workflowId: string, phase: string): Promise<void> {
-  const response = await fetch(`${SERVER_URL}/rpc/workflows.completePhase`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      workflowId,
-      phase,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
+  try {
+    await workflowApi.completePhase(workflowId, phase);
+  } catch (error) {
     console.error(`Failed to complete phase: ${error}`);
   }
 }
@@ -136,18 +141,9 @@ async function completePhase(workflowId: string, phase: string): Promise<void> {
  * Complete the workflow
  */
 async function completeWorkflow(workflowId: string): Promise<void> {
-  const response = await fetch(`${SERVER_URL}/rpc/workflows.complete`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      workflowId,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
+  try {
+    await workflowApi.complete(workflowId);
+  } catch (error) {
     console.error(`Failed to complete workflow: ${error}`);
   }
 }

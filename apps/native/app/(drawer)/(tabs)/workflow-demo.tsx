@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { Container } from "@/components/container";
 import { WorkflowViewer } from "@/components/workflow-viewer";
@@ -9,12 +9,28 @@ export default function WorkflowDemo() {
   const [workflowId, setWorkflowId] = useState<string>();
   const [isSimulating, setIsSimulating] = useState(false);
   const [startTime, setStartTime] = useState<number>();
+  const [elapsedTime, setElapsedTime] = useState("0.0s");
 
   const { workflow, isLoading, isConnected, isConnecting, connectionError } =
     useWorkflow({
       workflowId,
       enableWebSocket: true,
     });
+
+  // Update elapsed time every second only when simulating
+  useEffect(() => {
+    if (!isSimulating || !startTime) {
+      setElapsedTime("0.0s");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000;
+      setElapsedTime(`${elapsed.toFixed(1)}s`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isSimulating, startTime]);
 
   const handleStartDemo = async () => {
     if (isSimulating) {
@@ -57,17 +73,12 @@ export default function WorkflowDemo() {
     setWorkflowId(undefined);
     setIsSimulating(false);
     setStartTime(undefined);
-  };
-
-  const getElapsedTime = (): string => {
-    if (!startTime) return "0.0s";
-    const elapsed = (Date.now() - startTime) / 1000;
-    return `${elapsed.toFixed(1)}s`;
+    setElapsedTime("0.0s");
   };
 
   const getStatus = (): string => {
     if (!workflowId) return "No workflow";
-    if (isSimulating) return `Running... (${getElapsedTime()} / 30.0s)`;
+    if (isSimulating) return `Running... (${elapsedTime} / 30.0s)`;
     if (workflow?.status === "success") return "Completed successfully";
     if (workflow?.status === "failed") return "Failed";
     return "Ready";
@@ -140,6 +151,7 @@ export default function WorkflowDemo() {
         {workflowId && (
           <View className="mb-6">
             <WorkflowViewer
+              key={workflowId}
               connectionError={connectionError}
               isConnected={isConnected}
               isConnecting={isConnecting}

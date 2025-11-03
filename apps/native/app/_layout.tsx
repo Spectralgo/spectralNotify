@@ -4,7 +4,6 @@ import {
   type Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -14,8 +13,7 @@ import { Platform } from "react-native";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/use-color-scheme";
-import { queryClient } from "@/utils/orpc";
-import { SpectralNotifyProvider } from "@spectralnotify/client";
+import { SpectralNotifyProvider } from "@spectralnotify/react-native";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -52,27 +50,25 @@ export default function RootLayout() {
     return null;
   }
   return (
-    <QueryClientProvider client={queryClient}>
-      <SpectralNotifyProvider
-        config={{
-          serverUrl: process.env.EXPO_PUBLIC_SERVER_URL || "http://localhost:8094",
-          queryClient,
-        }}
-      >
-        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-          <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <Stack>
-              <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="modal"
-                options={{ title: "Modal", presentation: "modal" }}
-              />
-            </Stack>
-          </GestureHandlerRootView>
-        </ThemeProvider>
-      </SpectralNotifyProvider>
-    </QueryClientProvider>
+    <SpectralNotifyProvider
+      config={{
+        serverUrl: process.env.EXPO_PUBLIC_SERVER_URL || "http://localhost:8094",
+        apiKey: process.env.EXPO_PUBLIC_API_KEY || "local-dev-key",
+      }}
+    >
+      <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+        <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <Stack>
+            <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="modal"
+              options={{ title: "Modal", presentation: "modal" }}
+            />
+          </Stack>
+        </GestureHandlerRootView>
+      </ThemeProvider>
+    </SpectralNotifyProvider>
   );
 }
 

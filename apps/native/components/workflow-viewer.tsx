@@ -1,4 +1,4 @@
-import type { Workflow } from "@spectralnotify/client";
+import type { Workflow } from "@spectralnotify/react-native";
 import {
   ActivityIndicator,
   ScrollView,
@@ -175,7 +175,7 @@ export function WorkflowViewer({
           <View className="space-y-3">
             {workflow.phases.map((phase) => (
               <View
-                key={phase.key}
+                key={phase.phaseKey}
                 className={`rounded-lg border p-3 ${
                   phase.status === "in-progress"
                     ? "border-blue-500 bg-blue-500/10"

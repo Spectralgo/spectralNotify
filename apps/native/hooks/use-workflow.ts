@@ -1,5 +1,5 @@
-import { useWorkflow as useWorkflowClient } from "@spectralnotify/client";
-import type { Workflow, WorkflowUpdateEvent } from "@spectralnotify/client";
+import { useWorkflow as useWorkflowClient } from "@spectralnotify/react-native";
+import type { Workflow, WorkflowUpdateEvent } from "@spectralnotify/react-native";
 import { useCallback } from "react";
 
 export interface UseWorkflowOptions {
@@ -11,7 +11,7 @@ export interface UseWorkflowOptions {
 }
 
 /**
- * React Native wrapper for @spectralnotify/client useWorkflow hook
+ * React Native wrapper for @spectralnotify/react-native useWorkflow hook
  * Provides workflow monitoring with real-time WebSocket updates
  */
 export function useWorkflow({

@@ -37,7 +37,7 @@ export default function TabLayout() {
         options={{
           title: "Workflow",
           tabBarIcon: ({ color }) => (
-            <TabBarIcon color={color} name="video" />
+            <TabBarIcon color={color} name="play-circle" />
           ),
         }}
       />
