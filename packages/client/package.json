@@ -21,7 +21,9 @@
     "build": "tsdown src/index.ts --format esm,cjs --dts",
     "dev": "tsdown src/index.ts --format esm,cjs --dts --watch",
     "check-types": "tsc --noEmit",
-    "test:workflow-api": "tsx test/workflow-api.test.ts"
+    "test:workflow-api": "tsx test/workflow-api.test.ts",
+    "test:manual": "tsx test/manual-workflow-test.ts",
+    "test:integration": "vitest run workflow-websocket-integration"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.0.0",

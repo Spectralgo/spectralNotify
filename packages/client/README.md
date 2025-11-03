@@ -455,6 +455,41 @@ function WorkflowView({ workflowId, onComplete }) {
 
 The hooks automatically clean up WebSocket connections when unmounted, so no manual cleanup is required.
 
+## Testing
+
+The package includes comprehensive tests to verify REST API and WebSocket integration:
+
+### Run Manual Test
+
+Test the complete workflow lifecycle with colored console output:
+
+```bash
+# From project root (make sure server is running with pnpm dev)
+pnpm --filter @spectralnotify/client test:manual
+
+# With custom server URL
+SERVER_URL=http://localhost:8094 pnpm --filter @spectralnotify/client test:manual
+```
+
+This will:
+- ✅ Create a workflow via REST API (`/workflows/create`)
+- ✅ Connect to WebSocket for real-time updates (`/ws/workflow/{id}`)
+- ✅ Execute 3 phases with progress updates
+- ✅ Verify all WebSocket events are received
+- ✅ Show complete workflow lifecycle with timestamps
+
+### Run Integration Tests
+
+```bash
+# Run all tests
+pnpm --filter @spectralnotify/client test
+
+# Run only integration tests
+pnpm --filter @spectralnotify/client test:integration
+```
+
+See [test/README.md](./test/README.md) for detailed testing documentation.
+
 ## License
 
 MIT

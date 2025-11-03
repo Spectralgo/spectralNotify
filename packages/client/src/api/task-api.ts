@@ -17,7 +17,7 @@ export class TaskApi {
    */
   async getById(taskId: string): Promise<TaskMetadata> {
     return this.client.post<{ taskId: string }, TaskMetadata>(
-      "tasks.getById",
+      "/tasks/getById",
       { taskId }
     );
   }
@@ -27,7 +27,7 @@ export class TaskApi {
    */
   async getHistory(taskId: string, limit = 50): Promise<TaskHistory[]> {
     return this.client.post<{ taskId: string; limit: number }, TaskHistory[]>(
-      "tasks.getHistory",
+      "/tasks/getHistory",
       { taskId, limit }
     );
   }
@@ -53,7 +53,7 @@ export class TaskApi {
         metadata: NotifyMetadata;
       },
       TaskWriteResponse
-    >("tasks.create", {
+    >("/tasks/create", {
       id,
       status,
       progress,
@@ -76,7 +76,7 @@ export class TaskApi {
         progress: number;
       },
       TaskWriteResponse
-    >("tasks.updateProgress", {
+    >("/tasks/updateProgress", {
       taskId,
       progress,
     });
@@ -97,7 +97,7 @@ export class TaskApi {
         metadata?: NotifyMetadata;
       },
       TaskWriteResponse
-    >("tasks.complete", {
+    >("/tasks/complete", {
       taskId,
       metadata,
     });
@@ -121,7 +121,7 @@ export class TaskApi {
         metadata?: NotifyMetadata;
       },
       TaskWriteResponse
-    >("tasks.fail", {
+    >("/tasks/fail", {
       taskId,
       error,
       metadata,
@@ -143,7 +143,7 @@ export class TaskApi {
         metadata?: NotifyMetadata;
       },
       TaskWriteResponse
-    >("tasks.cancel", {
+    >("/tasks/cancel", {
       taskId,
       metadata,
     });

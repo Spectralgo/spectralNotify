@@ -37,4 +37,9 @@ export interface WorkflowPhaseInput {
   key: string;
   label: string;
   weight: number;
+  status: "pending" | "in-progress" | "success" | "failed" | "canceled";
+  progress: number;
+  startedAt?: string;
+  updatedAt?: string;
+  completedAt?: string;
 }

@@ -34,7 +34,7 @@ export class ApiClient {
   /**
    * Determine if an operation is a write operation that requires API key
    */
-  private isWriteOperation(procedure: string): boolean {
+  private isWriteOperation(endpoint: string): boolean {
     const writeOperations = [
       "create",
       "update",
@@ -45,20 +45,20 @@ export class ApiClient {
       "completePhase",
       "updateProgress",
     ];
-    return writeOperations.some((op) => procedure.includes(op));
+    return writeOperations.some((op) => endpoint.includes(op));
   }
 
   /**
    * Build headers for the request
    */
-  private buildHeaders(procedure: string): HeadersInit {
+  private buildHeaders(endpoint: string): HeadersInit {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       ...this.config.headers,
     };
 
     // Add API key for write operations
-    if (this.isWriteOperation(procedure) && this.config.apiKey) {
+    if (this.isWriteOperation(endpoint) && this.config.apiKey) {
       (headers as Record<string, string>)["X-API-Key"] = this.config.apiKey;
     }
 
@@ -109,29 +109,27 @@ export class ApiClient {
 
   /**
    * Make a POST request to a REST endpoint
-   * Converts oRPC procedure names (e.g., "workflows.getById") to REST paths (e.g., "/workflows/getById")
    * Automatically generates deterministic Idempotency-Key for write operations
    * API key is only required for write operations
    */
   async post<TInput, TOutput>(
-    procedure: string,
+    endpoint: string,
     input: TInput
   ): Promise<TOutput> {
-    // Convert oRPC-style procedure to REST endpoint path
-    // "workflows.getById" → "/workflows/getById"
-    const path = `/${procedure.replace(".", "/")}`;
+    // Ensure endpoint starts with /
+    const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
     const url = `${this.config.serverUrl}${path}`;
 
-    const isWrite = this.isWriteOperation(procedure);
+    const isWrite = this.isWriteOperation(endpoint);
 
     // Validate API key for write operations
     if (isWrite && !this.config.apiKey) {
       throw new Error(
-        `API key required for write operation: ${procedure}. Pass apiKey in ApiClientConfig.`
+        `API key required for write operation: ${endpoint}. Pass apiKey in ApiClientConfig.`
       );
     }
 
-    const headers = this.buildHeaders(procedure) as Record<string, string>;
+    const headers = this.buildHeaders(endpoint) as Record<string, string>;
 
     // Generate deterministic idempotency key for write operations
     if (isWrite) {
@@ -159,16 +157,14 @@ export class ApiClient {
 
   /**
    * Make a GET request to a REST endpoint
-   * Converts oRPC procedure names (e.g., "workflows.getById") to REST paths (e.g., "/workflows/getById")
    * For GET requests, input is serialized as query parameters
    */
   async get<TInput, TOutput>(
-    procedure: string,
+    endpoint: string,
     input?: TInput
   ): Promise<TOutput> {
-    // Convert oRPC-style procedure to REST endpoint path
-    // "workflows.getById" → "/workflows/getById"
-    const path = `/${procedure.replace(".", "/")}`;
+    // Ensure endpoint starts with /
+    const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
     let url = `${this.config.serverUrl}${path}`;
 
     if (input) {

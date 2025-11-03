@@ -19,7 +19,7 @@ export class WorkflowApi {
    */
   async getById(workflowId: string): Promise<WorkflowMetadata> {
     return this.client.post<{ workflowId: string }, WorkflowMetadata>(
-      "workflows.getById",
+      "/workflows/getById",
       { workflowId }
     );
   }
@@ -29,7 +29,7 @@ export class WorkflowApi {
    */
   async getPhases(workflowId: string): Promise<WorkflowPhase[]> {
     return this.client.post<{ workflowId: string }, WorkflowPhase[]>(
-      "workflows.getPhases",
+      "/workflows/getPhases",
       { workflowId }
     );
   }
@@ -44,7 +44,7 @@ export class WorkflowApi {
     return this.client.post<
       { workflowId: string; limit: number },
       WorkflowHistory[]
-    >("workflows.getHistory", { workflowId, limit });
+    >("/workflows/getHistory", { workflowId, limit });
   }
 
   /**
@@ -58,18 +58,25 @@ export class WorkflowApi {
     phases: WorkflowPhaseInput[],
     metadata: NotifyMetadata
   ): Promise<WorkflowWriteResponse> {
+    // Add required server fields to phases
+    const phasesWithDefaults = phases.map((phase) => ({
+      ...phase,
+      status: "pending" as const,
+      progress: 0,
+    }));
+
     return this.client.post<
       {
         id: string;
         status: string;
-        phases: WorkflowPhaseInput[];
+        phases: Array<WorkflowPhaseInput & { status: string; progress: number }>;
         metadata: NotifyMetadata;
       },
       WorkflowWriteResponse
-    >("workflows.create", {
+    >("/workflows/create", {
       id,
       status: "in-progress",
-      phases,
+      phases: phasesWithDefaults,
       metadata,
     });
   }
@@ -95,7 +102,7 @@ export class WorkflowApi {
         metadata?: NotifyMetadata;
       },
       WorkflowWriteResponse
-    >("workflows.updatePhaseProgress", {
+    >("/workflows/updatePhaseProgress", {
       workflowId,
       phase,
       progress,
@@ -121,7 +128,7 @@ export class WorkflowApi {
         metadata?: NotifyMetadata;
       },
       WorkflowWriteResponse
-    >("workflows.completePhase", {
+    >("/workflows/completePhase", {
       workflowId,
       phase,
       metadata,
@@ -143,7 +150,7 @@ export class WorkflowApi {
         metadata?: NotifyMetadata;
       },
       WorkflowWriteResponse
-    >("workflows.complete", {
+    >("/workflows/complete", {
       workflowId,
       metadata,
     });
@@ -167,7 +174,7 @@ export class WorkflowApi {
         metadata?: NotifyMetadata;
       },
       WorkflowWriteResponse
-    >("workflows.fail", {
+    >("/workflows/fail", {
       workflowId,
       error,
       metadata,
@@ -189,7 +196,7 @@ export class WorkflowApi {
         metadata?: NotifyMetadata;
       },
       WorkflowWriteResponse
-    >("workflows.cancel", {
+    >("/workflows/cancel", {
       workflowId,
       metadata,
     });
