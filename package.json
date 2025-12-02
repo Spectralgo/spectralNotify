@@ -19,6 +19,8 @@
     "db:studio:local": "turbo -F @spectralNotify/db db:studio:local",
     "db:studio:remote": "turbo -F @spectralNotify/db db:studio:remote",
     "db:generate": "turbo -F @spectralNotify/db db:generate",
+    "db:clear": "turbo -F @spectralNotify/db db:clear",
+    "db:clear:remote": "turbo -F @spectralNotify/db db:clear:remote",
     "counter:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.counter.ts",
     "task:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.task.ts",
     "workflow:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.workflow.ts",
@@ -35,7 +37,7 @@
     "ultracite": "5.6.4",
     "tsdown": "^0.15.5",
     "@types/node": "^22.13.11",
-    "alchemy": "^0.70.0",
+    "alchemy": "^0.79.0",
     "@cloudflare/workers-types": "^4.20250822.0"
   },
   "packageManager": "pnpm@10.12.1"

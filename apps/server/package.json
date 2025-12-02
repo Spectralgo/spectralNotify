@@ -29,7 +29,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250822.0",
     "@types/node": "^22.13.11",
-    "alchemy": "^0.70.0",
+    "alchemy": "^0.79.0",
     "drizzle-kit": "^0.31.5",
     "tsdown": "catalog:",
     "typescript": "catalog:",
