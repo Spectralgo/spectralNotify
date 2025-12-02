@@ -3,9 +3,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/utils/orpc";
 import {
-  closeWebSocket,
+  type ConnectionState,
+  type WorkflowWebSocketConnection,
   createWorkflowWebSocket,
-  sendPing,
 } from "@/utils/websocket-workflow";
 
 interface UseWorkflowWebSocketOptions {
@@ -15,7 +15,7 @@ interface UseWorkflowWebSocketOptions {
   pingInterval?: number;
 }
 
-interface ConnectionState {
+interface HookConnectionState {
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
@@ -37,14 +37,10 @@ export function useWorkflowWebSocket(
     pingInterval = 30_000,
   } = options;
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsRef = useRef<WorkflowWebSocketConnection | null>(null);
   const queryClient = useQueryClient();
 
-  const [connectionState, setConnectionState] = useState<ConnectionState>({
+  const [connectionState, setConnectionState] = useState<HookConnectionState>({
     isConnected: false,
     isConnecting: false,
     error: null,
@@ -154,6 +150,11 @@ export function useWorkflowWebSocket(
   const connect = () => {
     if (!(enabled && workflowId)) return;
 
+    // Close existing connection if any
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
     setConnectionState((prev) => ({
       ...prev,
       isConnecting: true,
@@ -161,28 +162,21 @@ export function useWorkflowWebSocket(
     }));
 
     wsRef.current = createWorkflowWebSocket(workflowId, {
-      onOpen: () => {
-        console.log(
-          `[WorkflowWebSocket] 🔌 Connected | workflowId=${workflowId} | timestamp=${new Date().toISOString()}`
-        );
+      onStateChange: (state: ConnectionState) => {
+        setConnectionState((prev) => ({
+          ...prev,
+          isConnected: state === "connected",
+          isConnecting: state === "connecting",
+        }));
 
-        setConnectionState({
-          isConnected: true,
-          isConnecting: false,
-          error: null,
-          lastUpdate: null,
-        });
-
-        // Start ping interval
-        pingIntervalRef.current = setInterval(() => {
-          if (wsRef.current) {
-            sendPing(wsRef.current);
-          }
-        }, pingInterval);
+        if (state === "connected") {
+          console.log(
+            `[WorkflowWebSocket] 🔌 Connected | workflowId=${workflowId} | timestamp=${new Date().toISOString()}`
+          );
+        }
       },
       onMessage: (message) => {
         if (message.type === "ping" || message.type === "pong") {
-          // Ignore ping/pong messages
           return;
         }
 
@@ -195,27 +189,7 @@ export function useWorkflowWebSocket(
         updateQueryCache(message as WorkflowUpdateEvent);
         onUpdate?.(message as WorkflowUpdateEvent);
       },
-      onClose: () => {
-        setConnectionState((prev) => ({
-          ...prev,
-          isConnected: false,
-          isConnecting: false,
-        }));
-
-        // Clear ping interval
-        if (pingIntervalRef.current) {
-          clearInterval(pingIntervalRef.current);
-          pingIntervalRef.current = null;
-        }
-
-        // Attempt to reconnect after delay
-        if (enabled && workflowId) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, reconnectInterval);
-        }
-      },
-      onError: (_error: Event) => {
+      onError: () => {
         setConnectionState((prev) => ({
           ...prev,
           error: "WebSocket connection error",
@@ -228,18 +202,8 @@ export function useWorkflowWebSocket(
   // Function to disconnect WebSocket
   const disconnect = () => {
     if (wsRef.current) {
-      closeWebSocket(wsRef.current);
+      wsRef.current.close();
       wsRef.current = null;
-    }
-
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-
-    if (pingIntervalRef.current) {
-      clearInterval(pingIntervalRef.current);
-      pingIntervalRef.current = null;
     }
   };
 

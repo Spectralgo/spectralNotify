@@ -23,8 +23,13 @@ export const queryClient = new QueryClient({
 export const link = new RPCLink({
   url: `${import.meta.env.VITE_SERVER_URL}/rpc`,
   fetch(url, options) {
+    // Auto-generate Idempotency-Key for all requests (only used by mutations)
+    const headers = new Headers(options?.headers);
+    headers.set("Idempotency-Key", crypto.randomUUID());
+
     return fetch(url, {
       ...options,
+      headers,
       credentials: "include",
     });
   },
