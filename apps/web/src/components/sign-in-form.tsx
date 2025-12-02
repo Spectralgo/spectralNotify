@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { AuthErrorAlert } from "./auth/AuthErrorAlert";
 import { AuthLoadingButton } from "./auth/AuthLoadingButton";
+import { GoogleSignInButton } from "./auth/google-sign-in-button";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Input } from "./ui/input";
@@ -226,6 +227,25 @@ export default function SignInForm({
                       </AuthLoadingButton>
                     )}
                   </form.Subscribe>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+
+                  <GoogleSignInButton
+                    onError={(err) => setError(err.message)}
+                    onSuccess={() => {
+                      navigate({ to: "/dashboard" });
+                      toast.success("Sign in successful");
+                    }}
+                  />
                 </div>
               </form>
             </CardContent>
