@@ -33,7 +33,7 @@ function WorkflowComponent() {
 ## Features
 
 - Real-time workflow and task updates via WebSocket
-- Automatic reconnection and error handling
+- Connection state tracking (`disconnected` | `connecting` | `connected`)
 - React Query integration for caching and synchronization
 - TypeScript support with full type definitions
 - Optimized for React Native and Expo

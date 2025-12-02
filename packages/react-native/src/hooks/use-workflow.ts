@@ -8,9 +8,8 @@ import type {
   WorkflowWebSocketMessage,
 } from "../types";
 import {
-  closeWebSocket,
+  type WorkflowWebSocketConnection,
   createWorkflowWebSocket,
-  sendPing,
 } from "../websocket";
 
 export interface UseWorkflowOptions {
@@ -81,11 +80,7 @@ export function useWorkflow({
 }: UseWorkflowOptions = {}) {
   const { workflowApi, config, queryClient } = useSpectralNotifyContext();
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsRef = useRef<WorkflowWebSocketConnection | null>(null);
 
   const [connectionState, setConnectionState] = useState<ConnectionState>({
     isConnected: false,
@@ -195,6 +190,11 @@ export function useWorkflow({
       );
     }
 
+    // Invalidate to ensure consistency
+    queryClient.invalidateQueries({
+      queryKey: ["spectralnotify", "workflow", workflowId, "history"],
+    });
+
     setConnectionState((prev) => ({
       ...prev,
       lastUpdate: new Date(),
@@ -205,91 +205,54 @@ export function useWorkflow({
   const connect = () => {
     if (!(enableWebSocket && workflowId)) return;
 
+    // Close existing connection if any
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
     setConnectionState((prev) => ({
       ...prev,
       isConnecting: true,
       error: null,
     }));
 
-    wsRef.current = createWorkflowWebSocket(
-      config.serverUrl,
-      workflowId,
-      {
-        onOpen: () => {
-          setConnectionState({
-            isConnected: true,
-            isConnecting: false,
-            error: null,
-            lastUpdate: null,
-          });
+    wsRef.current = createWorkflowWebSocket(config.serverUrl, workflowId, {
+      onStateChange: (state) => {
+        setConnectionState((prev) => ({
+          ...prev,
+          isConnected: state === "connected",
+          isConnecting: state === "connecting",
+        }));
+      },
+      onMessage: (message: WorkflowWebSocketMessage) => {
+        if (message.type === "ping" || message.type === "pong") {
+          return;
+        }
 
-          // Start ping interval
-          pingIntervalRef.current = setInterval(() => {
-            if (wsRef.current) {
-              sendPing(wsRef.current);
-            }
-          }, pingInterval);
-        },
-        onMessage: (message: WorkflowWebSocketMessage) => {
-          if (message.type === "ping" || message.type === "pong") {
-            return;
-          }
+        if (message.type === "error") {
+          console.error("[SpectralNotify] WebSocket error:", message.message);
+          return;
+        }
 
-          if (message.type === "error") {
-            console.error("[SpectralNotify] WebSocket error:", message.message);
-            return;
-          }
-
-          // Handle workflow update events
-          updateQueryCache(message as WorkflowUpdateEvent);
-          onWebSocketUpdate?.(message as WorkflowUpdateEvent);
-        },
-        onClose: () => {
-          setConnectionState((prev) => ({
-            ...prev,
-            isConnected: false,
-            isConnecting: false,
-          }));
-
-          // Clear ping interval
-          if (pingIntervalRef.current) {
-            clearInterval(pingIntervalRef.current);
-            pingIntervalRef.current = null;
-          }
-
-          // Attempt to reconnect after delay
-          if (enableWebSocket && workflowId) {
-            reconnectTimeoutRef.current = setTimeout(() => {
-              connect();
-            }, reconnectInterval);
-          }
-        },
-        onError: (_error: Event) => {
-          setConnectionState((prev) => ({
-            ...prev,
-            error: "WebSocket connection error",
-            isConnecting: false,
-          }));
-        },
-      }
-    );
+        // Handle workflow update events
+        updateQueryCache(message as WorkflowUpdateEvent);
+        onWebSocketUpdate?.(message as WorkflowUpdateEvent);
+      },
+      onError: () => {
+        setConnectionState((prev) => ({
+          ...prev,
+          error: "WebSocket connection error",
+          isConnecting: false,
+        }));
+      },
+    });
   };
 
   // Function to disconnect WebSocket
   const disconnect = () => {
     if (wsRef.current) {
-      closeWebSocket(wsRef.current);
+      wsRef.current.close();
       wsRef.current = null;
-    }
-
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-
-    if (pingIntervalRef.current) {
-      clearInterval(pingIntervalRef.current);
-      pingIntervalRef.current = null;
     }
   };
 

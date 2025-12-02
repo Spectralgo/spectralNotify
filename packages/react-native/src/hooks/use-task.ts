@@ -7,7 +7,10 @@ import type {
   TaskUpdateEvent,
   TaskWebSocketMessage,
 } from "../types";
-import { closeWebSocket, createTaskWebSocket, sendPing } from "../websocket";
+import {
+  type TaskWebSocketConnection,
+  createTaskWebSocket,
+} from "../websocket";
 
 export interface UseTaskOptions {
   /**
@@ -77,11 +80,7 @@ export function useTask({
 }: UseTaskOptions = {}) {
   const { taskApi, config, queryClient } = useSpectralNotifyContext();
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsRef = useRef<TaskWebSocketConnection | null>(null);
 
   const [connectionState, setConnectionState] = useState<ConnectionState>({
     isConnected: false,
@@ -180,6 +179,11 @@ export function useTask({
   const connect = () => {
     if (!(enableWebSocket && taskId)) return;
 
+    // Close existing connection if any
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
     setConnectionState((prev) => ({
       ...prev,
       isConnecting: true,
@@ -187,20 +191,12 @@ export function useTask({
     }));
 
     wsRef.current = createTaskWebSocket(config.serverUrl, taskId, {
-      onOpen: () => {
-        setConnectionState({
-          isConnected: true,
-          isConnecting: false,
-          error: null,
-          lastUpdate: null,
-        });
-
-        // Start ping interval
-        pingIntervalRef.current = setInterval(() => {
-          if (wsRef.current) {
-            sendPing(wsRef.current);
-          }
-        }, pingInterval);
+      onStateChange: (state) => {
+        setConnectionState((prev) => ({
+          ...prev,
+          isConnected: state === "connected",
+          isConnecting: state === "connecting",
+        }));
       },
       onMessage: (message: TaskWebSocketMessage) => {
         if (message.type === "ping" || message.type === "pong") {
@@ -216,27 +212,7 @@ export function useTask({
         updateQueryCache(message as TaskUpdateEvent);
         onWebSocketUpdate?.(message as TaskUpdateEvent);
       },
-      onClose: () => {
-        setConnectionState((prev) => ({
-          ...prev,
-          isConnected: false,
-          isConnecting: false,
-        }));
-
-        // Clear ping interval
-        if (pingIntervalRef.current) {
-          clearInterval(pingIntervalRef.current);
-          pingIntervalRef.current = null;
-        }
-
-        // Attempt to reconnect after delay
-        if (enableWebSocket && taskId) {
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, reconnectInterval);
-        }
-      },
-      onError: (_error: Event) => {
+      onError: () => {
         setConnectionState((prev) => ({
           ...prev,
           error: "WebSocket connection error",
@@ -249,18 +225,8 @@ export function useTask({
   // Function to disconnect WebSocket
   const disconnect = () => {
     if (wsRef.current) {
-      closeWebSocket(wsRef.current);
+      wsRef.current.close();
       wsRef.current = null;
-    }
-
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
-
-    if (pingIntervalRef.current) {
-      clearInterval(pingIntervalRef.current);
-      pingIntervalRef.current = null;
     }
   };
 
