@@ -5,7 +5,7 @@ Portable React client library for subscribing to SpectralNotify workflow and tas
 ## Features
 
 - 🚀 **Simple React Hooks** - Easy-to-use `useWorkflow` and `useTask` hooks
-- 📡 **Real-time Updates** - WebSocket integration with automatic reconnection
+- 📡 **Real-time WebSocket** - Live updates with connection state management
 - 🔄 **TanStack Query** - Built on TanStack Query for optimal caching and state management
 - 🎯 **Type-safe** - Full TypeScript support with comprehensive type definitions
 - 📦 **Zero oRPC dependency** - Uses standard fetch API and WebSockets
@@ -186,16 +186,12 @@ interface UseWorkflowOptions {
   workflowId?: string;
   enableWebSocket?: boolean;
   onWebSocketUpdate?: (event: WorkflowUpdateEvent) => void;
-  reconnectInterval?: number;
-  pingInterval?: number;
 }
 ```
 
 - `workflowId` (optional): The workflow ID to subscribe to
 - `enableWebSocket` (optional): Enable real-time updates (default: `true`)
 - `onWebSocketUpdate` (optional): Callback for WebSocket updates
-- `reconnectInterval` (optional): Reconnection delay in ms (default: `3000`)
-- `pingInterval` (optional): Keep-alive ping interval in ms (default: `30000`)
 
 ### useTask
 
@@ -229,10 +225,12 @@ interface UseTaskOptions {
   taskId?: string;
   enableWebSocket?: boolean;
   onWebSocketUpdate?: (event: TaskUpdateEvent) => void;
-  reconnectInterval?: number;
-  pingInterval?: number;
 }
 ```
+
+- `taskId` (optional): The task ID to subscribe to
+- `enableWebSocket` (optional): Enable real-time updates (default: `true`)
+- `onWebSocketUpdate` (optional): Callback for WebSocket updates
 
 ## Type Definitions
 
@@ -308,6 +306,15 @@ type TaskStatus =
   | "success"
   | "failed"
   | "canceled";
+```
+
+### WebSocket Types
+
+```tsx
+type ConnectionState =
+  | "disconnected"  // Not connected, not trying to connect
+  | "connecting"    // Initial connection attempt
+  | "connected";    // Successfully connected
 ```
 
 ## Advanced Usage
@@ -396,6 +403,48 @@ const handleResume = () => {
 };
 ```
 
+### Low-Level WebSocket API
+
+For advanced use cases, you can use the WebSocket connection classes directly:
+
+```tsx
+import {
+  createWorkflowWebSocket,
+  createTaskWebSocket
+} from '@spectralnotify/client';
+
+// Workflow WebSocket
+const workflowWs = createWorkflowWebSocket(
+  'https://api.example.com',
+  'workflow-id',
+  {
+    onStateChange: (state) => console.log('State:', state),
+    onMessage: (message) => console.log('Update:', message),
+    onOpen: () => console.log('Connected!'),
+    onClose: () => console.log('Disconnected'),
+    onError: (error) => console.error('Error:', error),
+  }
+);
+
+// Task WebSocket
+const taskWs = createTaskWebSocket(
+  'https://api.example.com',
+  'task-id',
+  {
+    onStateChange: (state) => console.log('State:', state),
+    onMessage: (message) => console.log('Update:', message),
+  }
+);
+
+// Check connection state
+console.log('Connected:', workflowWs.isConnected());
+console.log('State:', workflowWs.getState());
+
+// Clean up
+workflowWs.close();
+taskWs.close();
+```
+
 ## Error Handling
 
 ```tsx
@@ -455,9 +504,92 @@ function WorkflowView({ workflowId, onComplete }) {
 
 The hooks automatically clean up WebSocket connections when unmounted, so no manual cleanup is required.
 
-## Testing
+### 4. Connection State Monitoring
 
-The package includes comprehensive tests to verify REST API and WebSocket integration:
+You can monitor WebSocket connection state in your UI:
+
+```tsx
+const { workflow, isConnected, isConnecting } = useWorkflow({
+  workflowId: 'my-workflow'
+});
+
+return (
+  <div>
+    {isConnecting && <span>Connecting...</span>}
+    {!isConnected && !isConnecting && <span>Offline</span>}
+    {isConnected && <span>Live</span>}
+  </div>
+);
+```
+
+## External App Integration
+
+SpectralNotify is designed to work with any external application. Here's how different clients can connect:
+
+### Browser-based Apps
+
+WebSocket connections from any origin are allowed. No special configuration needed:
+
+```javascript
+// Any browser app can connect to WebSocket
+const ws = new WebSocket('wss://your-spectralnotify-server.com/ws/workflow/workflow-id');
+
+ws.onopen = () => console.log('Connected!');
+ws.onmessage = (event) => console.log('Update:', JSON.parse(event.data));
+```
+
+### Node.js / Server-side Apps
+
+```javascript
+import WebSocket from 'ws';
+
+const ws = new WebSocket('wss://your-spectralnotify-server.com/ws/workflow/workflow-id');
+
+ws.on('open', () => console.log('Connected!'));
+ws.on('message', (data) => console.log('Update:', JSON.parse(data.toString())));
+```
+
+### REST API with API Key
+
+For creating workflows/tasks and sending updates, use the REST API with an API key:
+
+```javascript
+// Create a workflow
+const response = await fetch('https://your-spectralnotify-server.com/workflows/create', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your-api-key',
+    'Idempotency-Key': crypto.randomUUID(),
+  },
+  body: JSON.stringify({
+    workflowId: 'my-workflow',
+    phases: [
+      { key: 'phase-1', label: 'Processing', weight: 50 },
+      { key: 'phase-2', label: 'Finalizing', weight: 50 },
+    ],
+  }),
+});
+
+// Subscribe to updates via WebSocket (no auth required)
+const ws = new WebSocket('wss://your-spectralnotify-server.com/ws/workflow/my-workflow');
+```
+
+### Mobile Apps (React Native / Expo)
+
+Use the `@spectralnotify/react-native` package or connect directly:
+
+```javascript
+// Direct WebSocket connection
+const ws = new WebSocket('wss://your-spectralnotify-server.com/ws/workflow/workflow-id');
+```
+
+### CORS Configuration
+
+- **WebSocket routes (`/ws/*`)**: Allow any origin - no restrictions
+- **REST API routes**: Require `X-API-Key` header for authentication, allow any origin
+
+## Testing
 
 ### Run Manual Test
 

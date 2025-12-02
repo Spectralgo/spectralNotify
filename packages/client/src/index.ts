@@ -49,5 +49,11 @@ export {
   createTaskWebSocket,
   sendPing,
   closeWebSocket,
+  WorkflowWebSocketConnection,
+  TaskWebSocketConnection,
 } from "./websocket";
-export type { WorkflowWebSocketOptions, TaskWebSocketOptions } from "./websocket";
+export type {
+  WorkflowWebSocketOptions,
+  TaskWebSocketOptions,
+  ConnectionState,
+} from "./websocket";
