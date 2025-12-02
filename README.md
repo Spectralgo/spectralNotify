@@ -92,12 +92,69 @@ spectralNotify/
 
 ## Available Scripts
 
-- `pnpm dev`: Start all applications in development mode
-- `pnpm build`: Build all applications
-- `pnpm dev:web`: Start only the web application
-- `pnpm dev:server`: Start only the server
-- `pnpm check-types`: Check TypeScript types across all apps
-- `pnpm dev:native`: Start the React Native/Expo development server
-- `pnpm db:push`: Push schema changes to database
-- `pnpm db:studio`: Open database studio UI
-- `cd apps/server && pnpm db:local`: Start the local SQLite database
+### Development
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start all applications in development mode (web, server, native) |
+| `pnpm dev:web` | Start only the web application |
+| `pnpm dev:server` | Start only the server |
+| `pnpm dev:native` | Start the React Native/Expo development server |
+
+### Build & Types
+
+| Command | Description |
+|---------|-------------|
+| `pnpm build` | Build all applications for production |
+| `pnpm check-types` | Run TypeScript type checking across all apps |
+| `pnpm check` | Run Biome linter and formatter across the codebase |
+
+### Database Management
+
+| Command | Description |
+|---------|-------------|
+| `pnpm db:push` | Push schema changes to the database |
+| `pnpm db:generate` | Generate new migration files from schema changes |
+| `pnpm db:studio` | Open Drizzle Studio UI (default config) |
+| `pnpm db:studio:local` | Open Drizzle Studio for local Miniflare D1 database |
+| `pnpm db:studio:remote` | Open Drizzle Studio for remote Cloudflare D1 database |
+| `pnpm db:clear` | Clear all data from local D1 database |
+| `pnpm db:clear:remote` | Clear all data from remote D1 database (with confirmation) |
+
+#### Database Clear Scripts
+
+**What:** Scripts to delete all rows from all tables in the D1 database.
+
+**Why:** Useful for resetting the database during development, testing, or when you need a clean slate without dropping/recreating the schema.
+
+**How:**
+- `pnpm db:clear` - Connects to the local Miniflare SQLite database and deletes all rows from all tables in foreign-key-safe order.
+- `pnpm db:clear:remote` - Connects to the remote Cloudflare D1 database via HTTP API. Requires confirmation before executing to prevent accidental data loss.
+
+Tables are cleared in this order to respect foreign key constraints:
+1. `session`, `account` (depend on user)
+2. `verification`, `idempotency_keys`
+3. `task_registry`, `workflow_registry`, `counter_registry`
+4. `user` (cleared last)
+
+**Prerequisites for remote clearing:**
+- `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
+- `DATABASE_ID` - The D1 database ID
+- `CLOUDFLARE_READ_API_TOKEN` - API token with D1 read/write permissions
+
+These should be set in `apps/server/.env`.
+
+### Durable Object Migrations
+
+| Command | Description |
+|---------|-------------|
+| `pnpm counter:generate` | Generate migrations for Counter Durable Object schema |
+| `pnpm task:generate` | Generate migrations for Task Durable Object schema |
+| `pnpm workflow:generate` | Generate migrations for Workflow Durable Object schema |
+
+### Deployment
+
+| Command | Description |
+|---------|-------------|
+| `pnpm deploy` | Deploy all applications to Cloudflare Workers via Alchemy |
+| `pnpm destroy` | Tear down deployed Cloudflare resources |
