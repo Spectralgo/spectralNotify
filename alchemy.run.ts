@@ -74,6 +74,8 @@ export const server = await Worker("server", {
     SPECTRAL_NOTIFY_API_KEY: alchemy.secret(
       process.env.SPECTRAL_NOTIFY_API_KEY
     ),
+    GOOGLE_CLIENT_ID: alchemy.secret(process.env.GOOGLE_CLIENT_ID),
+    GOOGLE_CLIENT_SECRET: alchemy.secret(process.env.GOOGLE_CLIENT_SECRET),
   },
   dev: {
     port: 8094,
@@ -92,6 +94,10 @@ export const web = await Vite("web", {
     command: "pnpm run dev",
   },
 });
+
+// Set dynamic bindings after both server and web are created
+server.bindings.BETTER_AUTH_URL = server.url;
+server.bindings.CORS_ORIGIN = web.url;
 
 console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);

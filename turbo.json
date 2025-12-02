@@ -40,6 +40,13 @@
     "db:generate": {
       "cache": false,
       "persistent": true
+    },
+    "db:clear": {
+      "cache": false
+    },
+    "db:clear:remote": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
