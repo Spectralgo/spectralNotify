@@ -29,6 +29,25 @@ type Env = {
 const app = new Hono<{ Bindings: Env }>();
 
 app.use(logger());
+
+// Permissive CORS for WebSocket routes - external apps can connect freely
+// WebSocket security is handled by the protocol itself, not CORS
+app.use(
+  "/ws/*",
+  cors({
+    origin: (origin) => {
+      // Allow any origin for WebSocket connections
+      // Non-browser clients don't send Origin header
+      // Browser clients are allowed from any origin
+      return origin || "*";
+    },
+    allowMethods: ["GET", "OPTIONS"],
+    allowHeaders: ["Upgrade", "Connection", "Sec-WebSocket-Key", "Sec-WebSocket-Version", "Sec-WebSocket-Protocol"],
+    credentials: false, // WebSocket doesn't use cookies
+  })
+);
+
+// Standard CORS for REST API and other routes
 app.use(
   "/*",
   cors({
@@ -53,8 +72,11 @@ app.use(
           return origin;
         }
       }
-      // Fallback to wildcard if no specific origins configured
-      return allowedOrigins.length > 0 ? allowedOrigins[0] : "*";
+
+      // For API key authenticated requests, allow any origin
+      // This enables external apps to call the API with their API key
+      // The actual authorization is handled by the API key check in middleware
+      return origin || "*";
     },
     allowMethods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allowHeaders: [
@@ -64,6 +86,7 @@ app.use(
       "Idempotency-Key",
     ],
     credentials: true,
+    exposeHeaders: ["X-Request-Id"],
   })
 );
 
@@ -102,7 +125,15 @@ export const rpcHandler = new RPCHandler(appRouter, {
 
 app.use("/*", async (c, next) => {
   const headers = c.req.raw.headers;
-  console.log(`[Middleware] Processing ${c.req.method} ${c.req.path}`);
+  const path = c.req.path;
+
+  // Skip middleware processing for WebSocket upgrade requests
+  // They are handled directly by the /ws/* routes without authentication
+  if (path.startsWith("/ws/") && headers.get("Upgrade") === "websocket") {
+    return next();
+  }
+
+  console.log(`[Middleware] Processing ${c.req.method} ${path}`);
 
   // Check API key (supports X-API-Key and Authorization: Bearer <key>)
   const headerApiKey = headers.get("X-API-Key") || undefined;
