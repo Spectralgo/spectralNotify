@@ -1,5 +1,11 @@
 import { useLocation } from "@tanstack/react-router";
-import { BarChart3, Calculator, ServerIcon, ShieldIcon } from "lucide-react";
+import {
+  BarChart3,
+  Calculator,
+  ServerIcon,
+  ShieldIcon,
+  TestTube2,
+} from "lucide-react";
 import { SidebarUserButton } from "@/components/sidebar-user-button";
 import {
   Sidebar,
@@ -31,6 +37,11 @@ const navigation = [
     name: "Counters",
     href: "/super-admin/counters",
     icon: Calculator,
+  },
+  {
+    name: "Integration Test",
+    href: "/super-admin/integration-test",
+    icon: TestTube2,
   },
 ];
 

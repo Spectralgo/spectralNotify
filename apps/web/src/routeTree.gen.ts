@@ -19,10 +19,12 @@ import { Route as AuthSignOutRouteImport } from './routes/_auth/sign-out'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as SuperAdminTasksRouteRouteImport } from './routes/super-admin/tasks/route'
+import { Route as SuperAdminIntegrationTestRouteRouteImport } from './routes/super-admin/integration-test/route'
 import { Route as SuperAdminCountersRouteRouteImport } from './routes/super-admin/counters/route'
 import { Route as AppWorkflowsRouteRouteImport } from './routes/_app/workflows/route'
 import { Route as AppTasksRouteRouteImport } from './routes/_app/tasks/route'
 import { Route as SuperAdminTasksIndexRouteImport } from './routes/super-admin/tasks/index'
+import { Route as SuperAdminIntegrationTestIndexRouteImport } from './routes/super-admin/integration-test/index'
 import { Route as SuperAdminCountersIndexRouteImport } from './routes/super-admin/counters/index'
 import { Route as AppWorkflowsLiveRouteImport } from './routes/_app/workflows/live'
 import { Route as AppWorkflowsAllRouteImport } from './routes/_app/workflows/all'
@@ -79,6 +81,12 @@ const SuperAdminTasksRouteRoute = SuperAdminTasksRouteRouteImport.update({
   path: '/tasks',
   getParentRoute: () => SuperAdminRouteRoute,
 } as any)
+const SuperAdminIntegrationTestRouteRoute =
+  SuperAdminIntegrationTestRouteRouteImport.update({
+    id: '/integration-test',
+    path: '/integration-test',
+    getParentRoute: () => SuperAdminRouteRoute,
+  } as any)
 const SuperAdminCountersRouteRoute = SuperAdminCountersRouteRouteImport.update({
   id: '/counters',
   path: '/counters',
@@ -99,6 +107,12 @@ const SuperAdminTasksIndexRoute = SuperAdminTasksIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SuperAdminTasksRouteRoute,
 } as any)
+const SuperAdminIntegrationTestIndexRoute =
+  SuperAdminIntegrationTestIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => SuperAdminIntegrationTestRouteRoute,
+  } as any)
 const SuperAdminCountersIndexRoute = SuperAdminCountersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -140,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AppTasksRouteRouteWithChildren
   '/workflows': typeof AppWorkflowsRouteRouteWithChildren
   '/super-admin/counters': typeof SuperAdminCountersRouteRouteWithChildren
+  '/super-admin/integration-test': typeof SuperAdminIntegrationTestRouteRouteWithChildren
   '/super-admin/tasks': typeof SuperAdminTasksRouteRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/login': typeof AuthLoginRoute
@@ -154,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/workflows/all': typeof AppWorkflowsAllRoute
   '/workflows/live': typeof AppWorkflowsLiveRoute
   '/super-admin/counters/': typeof SuperAdminCountersIndexRoute
+  '/super-admin/integration-test/': typeof SuperAdminIntegrationTestIndexRoute
   '/super-admin/tasks/': typeof SuperAdminTasksIndexRoute
 }
 export interface FileRoutesByTo {
@@ -172,6 +188,7 @@ export interface FileRoutesByTo {
   '/workflows/all': typeof AppWorkflowsAllRoute
   '/workflows/live': typeof AppWorkflowsLiveRoute
   '/super-admin/counters': typeof SuperAdminCountersIndexRoute
+  '/super-admin/integration-test': typeof SuperAdminIntegrationTestIndexRoute
   '/super-admin/tasks': typeof SuperAdminTasksIndexRoute
 }
 export interface FileRoutesById {
@@ -182,6 +199,7 @@ export interface FileRoutesById {
   '/_app/tasks': typeof AppTasksRouteRouteWithChildren
   '/_app/workflows': typeof AppWorkflowsRouteRouteWithChildren
   '/super-admin/counters': typeof SuperAdminCountersRouteRouteWithChildren
+  '/super-admin/integration-test': typeof SuperAdminIntegrationTestRouteRouteWithChildren
   '/super-admin/tasks': typeof SuperAdminTasksRouteRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_auth/login': typeof AuthLoginRoute
@@ -196,6 +214,7 @@ export interface FileRoutesById {
   '/_app/workflows/all': typeof AppWorkflowsAllRoute
   '/_app/workflows/live': typeof AppWorkflowsLiveRoute
   '/super-admin/counters/': typeof SuperAdminCountersIndexRoute
+  '/super-admin/integration-test/': typeof SuperAdminIntegrationTestIndexRoute
   '/super-admin/tasks/': typeof SuperAdminTasksIndexRoute
 }
 export interface FileRouteTypes {
@@ -205,6 +224,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/workflows'
     | '/super-admin/counters'
+    | '/super-admin/integration-test'
     | '/super-admin/tasks'
     | '/dashboard'
     | '/login'
@@ -219,6 +239,7 @@ export interface FileRouteTypes {
     | '/workflows/all'
     | '/workflows/live'
     | '/super-admin/counters/'
+    | '/super-admin/integration-test/'
     | '/super-admin/tasks/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -237,6 +258,7 @@ export interface FileRouteTypes {
     | '/workflows/all'
     | '/workflows/live'
     | '/super-admin/counters'
+    | '/super-admin/integration-test'
     | '/super-admin/tasks'
   id:
     | '__root__'
@@ -246,6 +268,7 @@ export interface FileRouteTypes {
     | '/_app/tasks'
     | '/_app/workflows'
     | '/super-admin/counters'
+    | '/super-admin/integration-test'
     | '/super-admin/tasks'
     | '/_app/dashboard'
     | '/_auth/login'
@@ -260,6 +283,7 @@ export interface FileRouteTypes {
     | '/_app/workflows/all'
     | '/_app/workflows/live'
     | '/super-admin/counters/'
+    | '/super-admin/integration-test/'
     | '/super-admin/tasks/'
   fileRoutesById: FileRoutesById
 }
@@ -341,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperAdminTasksRouteRouteImport
       parentRoute: typeof SuperAdminRouteRoute
     }
+    '/super-admin/integration-test': {
+      id: '/super-admin/integration-test'
+      path: '/integration-test'
+      fullPath: '/super-admin/integration-test'
+      preLoaderRoute: typeof SuperAdminIntegrationTestRouteRouteImport
+      parentRoute: typeof SuperAdminRouteRoute
+    }
     '/super-admin/counters': {
       id: '/super-admin/counters'
       path: '/counters'
@@ -368,6 +399,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/super-admin/tasks/'
       preLoaderRoute: typeof SuperAdminTasksIndexRouteImport
       parentRoute: typeof SuperAdminTasksRouteRoute
+    }
+    '/super-admin/integration-test/': {
+      id: '/super-admin/integration-test/'
+      path: '/'
+      fullPath: '/super-admin/integration-test/'
+      preLoaderRoute: typeof SuperAdminIntegrationTestIndexRouteImport
+      parentRoute: typeof SuperAdminIntegrationTestRouteRoute
     }
     '/super-admin/counters/': {
       id: '/super-admin/counters/'
@@ -498,6 +536,20 @@ const SuperAdminCountersRouteRouteWithChildren =
     SuperAdminCountersRouteRouteChildren,
   )
 
+interface SuperAdminIntegrationTestRouteRouteChildren {
+  SuperAdminIntegrationTestIndexRoute: typeof SuperAdminIntegrationTestIndexRoute
+}
+
+const SuperAdminIntegrationTestRouteRouteChildren: SuperAdminIntegrationTestRouteRouteChildren =
+  {
+    SuperAdminIntegrationTestIndexRoute: SuperAdminIntegrationTestIndexRoute,
+  }
+
+const SuperAdminIntegrationTestRouteRouteWithChildren =
+  SuperAdminIntegrationTestRouteRoute._addFileChildren(
+    SuperAdminIntegrationTestRouteRouteChildren,
+  )
+
 interface SuperAdminTasksRouteRouteChildren {
   SuperAdminTasksIndexRoute: typeof SuperAdminTasksIndexRoute
 }
@@ -511,6 +563,7 @@ const SuperAdminTasksRouteRouteWithChildren =
 
 interface SuperAdminRouteRouteChildren {
   SuperAdminCountersRouteRoute: typeof SuperAdminCountersRouteRouteWithChildren
+  SuperAdminIntegrationTestRouteRoute: typeof SuperAdminIntegrationTestRouteRouteWithChildren
   SuperAdminTasksRouteRoute: typeof SuperAdminTasksRouteRouteWithChildren
   SuperAdminApiStatusRoute: typeof SuperAdminApiStatusRoute
   SuperAdminIndexRoute: typeof SuperAdminIndexRoute
@@ -518,6 +571,8 @@ interface SuperAdminRouteRouteChildren {
 
 const SuperAdminRouteRouteChildren: SuperAdminRouteRouteChildren = {
   SuperAdminCountersRouteRoute: SuperAdminCountersRouteRouteWithChildren,
+  SuperAdminIntegrationTestRouteRoute:
+    SuperAdminIntegrationTestRouteRouteWithChildren,
   SuperAdminTasksRouteRoute: SuperAdminTasksRouteRouteWithChildren,
   SuperAdminApiStatusRoute: SuperAdminApiStatusRoute,
   SuperAdminIndexRoute: SuperAdminIndexRoute,
