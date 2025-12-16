@@ -55,6 +55,7 @@ export const server = await Worker("server", {
   cwd: "apps/server",
   entrypoint: "src/index.ts",
   compatibility: "node",
+  domains: ["notify-api.spectralgo.com"],
   bundle: {
     // Configure esbuild to load .sql files as text strings
     // This allows Drizzle migrations to import SQL files directly
@@ -67,9 +68,9 @@ export const server = await Worker("server", {
     COUNTER: counter,
     TASK: task,
     WORKFLOW: workflow,
-    CORS_ORIGIN: "",
+    CORS_ORIGIN: "", // Set dynamically after web is created
     BETTER_AUTH_SECRET: alchemy.secret(process.env.BETTER_AUTH_SECRET),
-    BETTER_AUTH_URL: "",
+    BETTER_AUTH_URL: "", // Set dynamically after server URL is known
     ALLOWED_EMAIL: alchemy.secret(process.env.ALLOWED_EMAIL),
     SPECTRAL_NOTIFY_API_KEY: alchemy.secret(
       process.env.SPECTRAL_NOTIFY_API_KEY
@@ -87,6 +88,7 @@ export const web = await Vite("web", {
   cwd: "apps/web",
   assets: "dist",
   compatibility: "node",
+  domains: ["notify.spectralgo.com"],
   bindings: {
     VITE_SERVER_URL: server.url!,
   },
@@ -95,9 +97,10 @@ export const web = await Vite("web", {
   },
 });
 
-// Set dynamic bindings after both server and web are created
-server.bindings.BETTER_AUTH_URL = server.url;
-server.bindings.CORS_ORIGIN = web.url;
+// Set dynamic bindings - use server.url and web.url for correct dev/prod URLs
+// Type assertion needed because alchemy types bindings as readonly
+(server.bindings as { BETTER_AUTH_URL: string }).BETTER_AUTH_URL = server.url!;
+(server.bindings as { CORS_ORIGIN: string }).CORS_ORIGIN = web.url!;
 
 console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);
