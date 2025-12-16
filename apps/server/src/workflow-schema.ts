@@ -23,6 +23,7 @@ export const workflowMetadata = sqliteTable("workflow_metadata", {
 /**
  * Workflow phases table - stores phase data relationally
  * One row per phase, strongly typed
+ * Supports hierarchical phases via parentPhaseKey
  */
 export const workflowPhases = sqliteTable("workflow_phases", {
   workflowId: text("workflow_id").notNull(),
@@ -32,6 +33,8 @@ export const workflowPhases = sqliteTable("workflow_phases", {
   status: text("status").notNull(), // "pending" | "in-progress" | "success" | "failed" | "canceled"
   progress: integer("progress").notNull().default(0), // 0-100
   order: integer("order").notNull(), // Execution order (0, 1, 2, ...)
+  parentPhaseKey: text("parent_phase_key"), // null for top-level phases, parent key for children
+  depth: integer("depth").notNull().default(0), // 0 for top-level, 1+ for nested
   startedAt: text("started_at"),
   updatedAt: text("updated_at"),
   completedAt: text("completed_at"),
