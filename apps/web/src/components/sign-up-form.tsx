@@ -17,12 +17,12 @@ import { Label } from "./ui/label";
 
 export default function SignUpForm({
   onSwitchToSignIn,
+  redirectTo,
 }: {
   onSwitchToSignIn: () => void;
+  redirectTo?: string;
 }) {
-  const navigate = useNavigate({
-    from: "/",
-  });
+  const navigate = useNavigate();
   const [error, setError] = useState("");
 
   const form = useForm({
@@ -42,7 +42,7 @@ export default function SignUpForm({
         {
           onSuccess: () => {
             navigate({
-              to: "/dashboard",
+              to: redirectTo || "/",
             });
             toast.success("Sign up successful");
           },
@@ -284,7 +284,7 @@ export default function SignUpForm({
                   <GoogleSignInButton
                     onError={(err) => setError(err.message)}
                     onSuccess={() => {
-                      navigate({ to: "/dashboard" });
+                      navigate({ to: redirectTo || "/" });
                       toast.success("Sign up successful");
                     }}
                   />
