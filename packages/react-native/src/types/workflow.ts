@@ -15,6 +15,7 @@ export type WorkflowEventType =
 
 /**
  * Phase definition structure from server
+ * Supports hierarchical phases via parentPhaseKey
  */
 export interface WorkflowPhase {
   workflowId: string;
@@ -24,6 +25,8 @@ export interface WorkflowPhase {
   status: "pending" | "in-progress" | "success" | "failed" | "canceled";
   progress: number;
   order: number;
+  parentPhaseKey?: string | null; // null for top-level phases, parent key for children
+  depth?: number; // 0 for top-level, 1+ for nested
   startedAt?: string | null;
   updatedAt?: string | null;
   completedAt?: string | null;
