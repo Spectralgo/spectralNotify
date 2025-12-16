@@ -20,6 +20,8 @@ const router = createRouter({
         <AuthQueryProvider>
           <AuthUIProviderTanstack
             authClient={authClient}
+            basePath=""
+            viewPaths={{ SIGN_IN: "login" }}
             Link={({ href, ...props }) => <Link to={href} {...props} />}
             navigate={(href) => router.navigate({ to: href })}
             replace={(href) => router.navigate({ to: href, replace: true })}
