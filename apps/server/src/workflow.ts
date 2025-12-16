@@ -65,7 +65,42 @@ export class Workflow extends DurableObject {
   }
 
   /**
+   * Calculate overall progress for hierarchical phases
+   * For parent phases: progress = weighted sum of children
+   * For leaf phases (no children): use direct progress
+   */
+  private calculateHierarchicalProgress(phases: WorkflowPhase[]): number {
+    // Get top-level phases (no parent)
+    const topLevelPhases = phases.filter((p) => !p.parentPhaseKey);
+
+    const calculatePhaseProgress = (phase: WorkflowPhase): number => {
+      // Find children of this phase
+      const children = phases.filter((p) => p.parentPhaseKey === phase.phaseKey);
+
+      if (children.length === 0) {
+        // Leaf phase: use direct progress
+        return phase.progress;
+      }
+
+      // Parent phase: compute weighted sum of children's progress
+      return children.reduce((sum, child) => {
+        const childProgress = calculatePhaseProgress(child);
+        return sum + childProgress * child.weight;
+      }, 0);
+    };
+
+    // Overall progress = weighted sum of top-level phases
+    const overallProgress = topLevelPhases.reduce((sum, phase) => {
+      const phaseProgress = calculatePhaseProgress(phase);
+      return sum + phaseProgress * phase.weight;
+    }, 0);
+
+    return Math.floor(overallProgress);
+  }
+
+  /**
    * Initialize workflow with metadata and phases
+   * Supports hierarchical phases via parentPhaseKey
    */
   async initialize(input: {
     workflowId: string;
@@ -76,6 +111,8 @@ export class Workflow extends DurableObject {
       weight: number;
       status: string;
       progress: number;
+      parentPhaseKey?: string | null;
+      depth?: number;
     }>;
     metadata: Record<string, unknown>;
   }): Promise<void> {
@@ -119,7 +156,7 @@ export class Workflow extends DurableObject {
       await this.db.insert(workflowMetadata).values(newWorkflow);
       this.workflowId = input.workflowId;
 
-      // Insert phases relationally
+      // Insert phases relationally (supports hierarchical phases)
       const phaseRecords: NewWorkflowPhase[] = input.phases.map(
         (phase, index) => ({
           workflowId: input.workflowId,
@@ -129,6 +166,8 @@ export class Workflow extends DurableObject {
           status: phase.status,
           progress: phase.progress,
           order: index,
+          parentPhaseKey: phase.parentPhaseKey ?? undefined,
+          depth: phase.depth ?? 0,
           startedAt: phase.status === "in-progress" ? now : undefined,
           updatedAt: phase.status === "in-progress" ? now : undefined,
         })
@@ -231,16 +270,16 @@ export class Workflow extends DurableObject {
         })
         .where(eq(workflowPhases.phaseKey, phaseKey));
 
-      // Recompute overall progress from all phases
+      // Recompute overall progress from all phases (supports hierarchical phases)
       const allPhases = await tx
         .select()
         .from(workflowPhases)
         .orderBy(asc(workflowPhases.order))
         .all();
 
-      const overallProgress = Math.floor(
-        allPhases.reduce((sum, p) => sum + p.progress * p.weight, 0)
-      );
+      // Calculate progress recursively for hierarchical phases
+      // Top-level phases contribute directly, parent phases compute from children
+      const overallProgress = this.calculateHierarchicalProgress(allPhases);
 
       // Count completed phases
       const completedPhaseCount = allPhases.filter(

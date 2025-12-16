@@ -50,10 +50,55 @@ const workflowPhaseSchema = z.object({
   weight: z.number().min(0).max(1),
   status: z.enum(["pending", "in-progress", "success", "failed", "canceled"]),
   progress: z.number().min(0).max(100),
+  parentPhaseKey: z.string().nullish(), // null or undefined for top-level phases
+  depth: z.number().int().min(0).optional().default(0),
   startedAt: z.string().optional(),
   updatedAt: z.string().optional(),
   completedAt: z.string().optional(),
 });
+
+/**
+ * Validate hierarchical phase weights
+ * - Top-level phases (no parentPhaseKey) must sum to 1.0
+ * - Each parent phase's children must also sum to 1.0
+ */
+function validateHierarchicalWeights(phases: Array<{ key: string; weight: number; parentPhaseKey?: string | null }>): { valid: boolean; error?: string } {
+  // Group phases by parent
+  const topLevel = phases.filter((p) => !p.parentPhaseKey);
+  const byParent = new Map<string, typeof phases>();
+
+  for (const phase of phases) {
+    if (phase.parentPhaseKey) {
+      const children = byParent.get(phase.parentPhaseKey) || [];
+      children.push(phase);
+      byParent.set(phase.parentPhaseKey, children);
+    }
+  }
+
+  // Check top-level weights sum to 1.0
+  const topLevelWeight = topLevel.reduce((sum, p) => sum + p.weight, 0);
+  if (Math.abs(topLevelWeight - 1.0) >= 0.001) {
+    return { valid: false, error: `Top-level phase weights must sum to 1.0 (got ${topLevelWeight.toFixed(3)})` };
+  }
+
+  // Check each parent's children weights sum to 1.0
+  for (const [parentKey, children] of byParent) {
+    const childWeight = children.reduce((sum, p) => sum + p.weight, 0);
+    if (Math.abs(childWeight - 1.0) >= 0.001) {
+      return { valid: false, error: `Children of "${parentKey}" must sum to 1.0 (got ${childWeight.toFixed(3)})` };
+    }
+  }
+
+  // Verify all parentPhaseKeys reference existing phases
+  const allKeys = new Set(phases.map((p) => p.key));
+  for (const phase of phases) {
+    if (phase.parentPhaseKey && !allKeys.has(phase.parentPhaseKey)) {
+      return { valid: false, error: `Parent phase "${phase.parentPhaseKey}" not found for phase "${phase.key}"` };
+    }
+  }
+
+  return { valid: true };
+}
 
 const createWorkflowSchema = z.object({
   id: z.string().min(1),
@@ -70,10 +115,13 @@ const createWorkflowSchema = z.object({
     )
     .refine(
       (phases) => {
-        const totalWeight = phases.reduce((sum, p) => sum + p.weight, 0);
-        return Math.abs(totalWeight - 1.0) < 0.001;
+        const result = validateHierarchicalWeights(phases);
+        return result.valid;
       },
-      { message: "Phase weights must sum to 1.0" }
+      (phases) => {
+        const result = validateHierarchicalWeights(phases);
+        return { message: result.error || "Phase weights validation failed" };
+      }
     ),
   metadata: notifyMetadataSchema,
 });

@@ -18,17 +18,26 @@ export type WorkflowEventType =
 
 /**
  * Phase definition structure
+ * Supports hierarchical phases via parentPhaseKey
  */
-export interface WorkflowPhase {
-  key: string; // e.g., "download", "transcription"
+export interface WorkflowPhase<K extends string = string> {
+  key: K; // e.g., "download", "transcription.download"
   label: string; // e.g., "Download", "Transcription"
   weight: number; // 0-1, used for computing overall progress (e.g., 0.4, 0.6)
   status: "pending" | "in-progress" | "success" | "failed" | "canceled";
   progress: number; // 0-100
+  parentPhaseKey?: K | null; // null for top-level phases, parent key for children
+  depth?: number; // 0 for top-level, 1+ for nested
   startedAt?: string; // ISO timestamp
   updatedAt?: string; // ISO timestamp
   completedAt?: string; // ISO timestamp
 }
+
+/**
+ * Helper type to extract phase keys from a phase definition array
+ * Usage: type MyPhaseKey = PhaseKeyOf<typeof MY_PHASES>
+ */
+export type PhaseKeyOf<T extends readonly { key: string }[]> = T[number]["key"];
 
 // Workflow metadata from Durable Object (matches workflow-schema.ts)
 export interface WorkflowMetadata {
