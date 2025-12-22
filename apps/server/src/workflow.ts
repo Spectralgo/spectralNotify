@@ -157,6 +157,7 @@ export class Workflow extends DurableObject {
       this.workflowId = input.workflowId;
 
       // Insert phases relationally (supports hierarchical phases)
+      // Batch inserts to avoid SQLite variable limit in D1
       const phaseRecords: NewWorkflowPhase[] = input.phases.map(
         (phase, index) => ({
           workflowId: input.workflowId,
@@ -173,7 +174,12 @@ export class Workflow extends DurableObject {
         })
       );
 
-      await this.db.insert(workflowPhases).values(phaseRecords);
+      // Batch insert phases in groups of 5 to avoid SQLite variable limit
+      const PHASE_BATCH_SIZE = 5;
+      for (let i = 0; i < phaseRecords.length; i += PHASE_BATCH_SIZE) {
+        const batch = phaseRecords.slice(i, i + PHASE_BATCH_SIZE);
+        await this.db.insert(workflowPhases).values(batch);
+      }
 
       // Add initial event
       const initialEvent: NewWorkflowHistory = {
@@ -185,6 +191,22 @@ export class Workflow extends DurableObject {
       };
 
       await this.db.insert(workflowHistory).values(initialEvent);
+
+      // Fetch the created workflow and phases for broadcast
+      const [createdWorkflow, createdPhases] = await Promise.all([
+        this.getWorkflow(),
+        this.getPhases(),
+      ]);
+
+      // Broadcast initialization to any connected WebSocket clients
+      await this.broadcastUpdate({
+        type: "initialized",
+        workflowId: this.workflowId,
+        overallProgress: createdWorkflow.overallProgress,
+        workflow: createdWorkflow,
+        phases: createdPhases,
+        timestamp: now,
+      });
 
       const duration = Date.now() - startTime;
       console.log(
@@ -237,6 +259,18 @@ export class Workflow extends DurableObject {
   }> {
     const startTime = Date.now();
     const now = new Date().toISOString();
+
+    // Ensure workflowId is set (may be empty after DO hibernation wake)
+    if (!this.workflowId) {
+      const existing = await this.db
+        .select()
+        .from(workflowMetadata)
+        .where(eq(workflowMetadata.id, 1))
+        .get();
+      if (existing) {
+        this.workflowId = existing.workflowId;
+      }
+    }
 
     console.log(
       `[WorkflowDO] 📥 RECEIVE updatePhaseProgress | workflowId=${this.workflowId} | phase=${phaseKey} | progress=${progress}% | timestamp=${now}`
@@ -376,6 +410,18 @@ export class Workflow extends DurableObject {
   }> {
     const now = new Date().toISOString();
 
+    // Ensure workflowId is set (may be empty after DO hibernation wake)
+    if (!this.workflowId) {
+      const existing = await this.db
+        .select()
+        .from(workflowMetadata)
+        .where(eq(workflowMetadata.id, 1))
+        .get();
+      if (existing) {
+        this.workflowId = existing.workflowId;
+      }
+    }
+
     // Use transaction to ensure atomicity
     await this.db.transaction(async (tx) => {
       // Update workflow status
@@ -413,6 +459,7 @@ export class Workflow extends DurableObject {
     await this.broadcastUpdate({
       type: "complete",
       workflowId: this.workflowId,
+      overallProgress: updatedWorkflow.overallProgress,
       workflow: updatedWorkflow,
       phases: allPhases,
       timestamp: now,
@@ -436,6 +483,18 @@ export class Workflow extends DurableObject {
     latestHistory: WorkflowHistory[];
   }> {
     const now = new Date().toISOString();
+
+    // Ensure workflowId is set (may be empty after DO hibernation wake)
+    if (!this.workflowId) {
+      const existing = await this.db
+        .select()
+        .from(workflowMetadata)
+        .where(eq(workflowMetadata.id, 1))
+        .get();
+      if (existing) {
+        this.workflowId = existing.workflowId;
+      }
+    }
 
     // Use transaction to ensure atomicity
     await this.db.transaction(async (tx) => {
@@ -493,6 +552,18 @@ export class Workflow extends DurableObject {
     latestHistory: WorkflowHistory[];
   }> {
     const now = new Date().toISOString();
+
+    // Ensure workflowId is set (may be empty after DO hibernation wake)
+    if (!this.workflowId) {
+      const existing = await this.db
+        .select()
+        .from(workflowMetadata)
+        .where(eq(workflowMetadata.id, 1))
+        .get();
+      if (existing) {
+        this.workflowId = existing.workflowId;
+      }
+    }
 
     // Use transaction to ensure atomicity
     await this.db.transaction(async (tx) => {
@@ -567,6 +638,7 @@ export class Workflow extends DurableObject {
    */
   private async broadcastUpdate(event: {
     type:
+      | "initialized"
       | "phase-progress"
       | "workflow-progress"
       | "complete"
