@@ -20,6 +20,7 @@ type Env = {
   BETTER_AUTH_URL: string;
   ALLOWED_EMAIL: string;
   SPECTRAL_NOTIFY_API_KEY: string;
+  BUILD_ID: string;
   DB: D1Database;
   COUNTER: DurableObjectNamespace;
   TASK: DurableObjectNamespace;
@@ -233,6 +234,7 @@ app.use("/*", async (c, next) => {
 });
 
 app.get("/", (c) => c.text("OK"));
+app.get("/__version", (c) => c.json({ buildId: c.env.BUILD_ID }));
 
 // WebSocket upgrade endpoint for Counter Durable Objects
 // This proxies the WebSocket connection directly to the appropriate Counter DO
