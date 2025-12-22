@@ -5,6 +5,7 @@ import * as schema from "@spectralNotify/db/schema/auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
+import { oneTap } from "better-auth/plugins";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -13,8 +14,10 @@ export const auth = betterAuth({
     schema,
   }),
   trustedOrigins: [
-    env.CORS_ORIGIN,
+    // Split CORS_ORIGIN since it may be comma-separated
+    ...(env.CORS_ORIGIN?.split(",").map((o) => o.trim()) ?? []),
     "http://localhost:3014", // Local development frontend
+    "https://notify.spectralgo.com", // Production frontend
     "mybettertapp://",
     "exp://",
   ],
@@ -125,5 +128,5 @@ export const auth = betterAuth({
       }
     }),
   },
-  plugins: [expo()],
+  plugins: [expo(), oneTap()],
 });
