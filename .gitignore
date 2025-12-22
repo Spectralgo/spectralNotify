@@ -39,6 +39,10 @@ lerna-debug.log*
 # Better-T-Stack
 .alchemy
 
+# Alchemy run build artifacts (commit the .ts source only)
+alchemy.run.js
+alchemy.run.d.ts
+
 # Testing
 coverage
 .nyc_output

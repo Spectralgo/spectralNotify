@@ -7,8 +7,12 @@
     "packages/*"
   ],
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "check": "biome check --write .",
-    "dev": "alchemy dev",
+    "dev": "alchemy dev ./alchemy.run.ts",
+    "cf:dev": "alchemy dev ./alchemy.run.ts",
     "build": "turbo build",
     "check-types": "turbo check-types",
     "dev:native": "turbo -F native dev",
@@ -18,20 +22,24 @@
     "db:studio": "turbo -F @spectralNotify/db db:studio",
     "db:studio:local": "turbo -F @spectralNotify/db db:studio:local",
     "db:studio:remote": "turbo -F @spectralNotify/db db:studio:remote",
-    "db:generate": "turbo -F @spectralNotify/db db:generate",
+    "db:generate": "turbo -F @spectralNotify/db db:generate && pnpm run counter:db:generate && pnpm run task:db:generate && pnpm run workflow:db:generate",
     "db:clear": "turbo -F @spectralNotify/db db:clear",
     "db:clear:remote": "turbo -F @spectralNotify/db db:clear:remote",
-    "counter:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.counter.ts",
-    "task:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.task.ts",
-    "workflow:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.workflow.ts",
-    "deploy": "alchemy deploy",
-    "destroy": "alchemy destroy"
+    "counter:db:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.counter.ts",
+    "task:db:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.task.ts",
+    "workflow:db:generate": "cd apps/server && pnpm drizzle-kit generate --config=drizzle.config.workflow.ts",
+    "deploy": "alchemy deploy ./alchemy.run.ts",
+    "destroy": "alchemy destroy ./alchemy.run.ts",
+    "cf:deploy": "alchemy deploy ./alchemy.run.ts",
+    "cf:destroy": "alchemy destroy ./alchemy.run.ts"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "vitest": "^3.2.4",
+    "@vitest/coverage-v8": "^3.2.4",
     "turbo": "^2.5.4",
     "@biomejs/biome": "2.2.6",
     "ultracite": "5.6.4",
