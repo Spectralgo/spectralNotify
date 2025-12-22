@@ -71,9 +71,15 @@ BETTER_AUTH_URL={your-production-server-domain}
 
 
 ## Deployment (Alchemy)
-- Dev: pnpm dev
-- Deploy: pnpm deploy
-- Destroy: pnpm destroy
+- Dev: `pnpm cf:dev` (or `pnpm dev`)
+- Deploy: `pnpm cf:deploy --profile dev` (and optionally `--stage <stage>`)
+- Destroy: `pnpm cf:destroy --profile dev`
+
+Notes:
+- `--profile` selects Alchemy credentials; `--stage` selects the target environment name (defaults to your username).
+- Deploys include a content-based `BUILD_ID`/`VITE_BUILD_ID` binding so Worker updates are applied even when only application code changes.
+- Verify a deploy:
+  - `https://notify.spectralgo.com/?__build=1` (shows `build <id>` overlay) or View Source for `<meta name="build-id" ...>`.
 
 
 ## Project Structure
