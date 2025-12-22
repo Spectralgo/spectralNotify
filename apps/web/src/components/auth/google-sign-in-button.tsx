@@ -3,11 +3,13 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "../ui/button";
 
 interface GoogleSignInButtonProps {
+  redirectTo?: string;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
 
 export function GoogleSignInButton({
+  redirectTo,
   onSuccess,
   onError,
 }: GoogleSignInButtonProps) {
@@ -16,14 +18,27 @@ export function GoogleSignInButton({
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: window.location.origin,
+      // Build full callback URL - must be absolute URL, not just a path
+      const callbackURL = redirectTo
+        ? new URL(redirectTo, window.location.origin).toString()
+        : window.location.origin;
+
+      // Use One Tap for inline Google sign-in (no redirect to Google)
+      await authClient.oneTap({
+        callbackURL,
+        fetchOptions: {
+          onSuccess: () => {
+            setIsLoading(false);
+            onSuccess?.();
+          },
+          onError: (ctx) => {
+            setIsLoading(false);
+            onError?.(new Error(ctx.error.message));
+          },
+        },
       });
-      onSuccess?.();
     } catch (error) {
       onError?.(error as Error);
-    } finally {
       setIsLoading(false);
     }
   };
