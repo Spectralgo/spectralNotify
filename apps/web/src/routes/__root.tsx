@@ -48,6 +48,11 @@ function RootComponent() {
     select: (s) => s.isLoading,
   });
 
+  const showBuildId =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("__build");
+  const buildId = (import.meta as any).env?.VITE_BUILD_ID as string | undefined;
+
   const [client] = useState<AppRouterClient>(() => createORPCClient(link));
   const [orpcUtils] = useState(() => createTanstackQueryUtils(client));
 
@@ -63,6 +68,11 @@ function RootComponent() {
       >
         {isFetching ? <Loader /> : <Outlet />}
         <Toaster richColors />
+        {showBuildId && buildId ? (
+          <div className="pointer-events-none fixed bottom-2 left-2 z-50 font-mono text-[10px] text-muted-foreground/70">
+            build {buildId}
+          </div>
+        ) : null}
       </ThemeProvider>
       <TanStackRouterDevtools position="bottom-right" />
       <ReactQueryDevtools buttonPosition="bottom-right" position="bottom" />
