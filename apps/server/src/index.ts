@@ -18,6 +18,7 @@ type Env = {
   CORS_ORIGIN: string;
   BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL: string;
+  BETTER_AUTH_COOKIE_DOMAIN?: string;
   ALLOWED_EMAIL: string;
   SPECTRAL_NOTIFY_API_KEY: string;
   BUILD_ID: string;
