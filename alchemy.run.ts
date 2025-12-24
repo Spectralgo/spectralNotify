@@ -6,7 +6,7 @@ import {
   Worker,
 } from "alchemy/cloudflare";
 import { Exec } from "alchemy/os";
-import { config } from "dotenv";
+import { config, parse } from "dotenv";
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
@@ -14,6 +14,10 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.dirname(fileURLToPath(import.meta.url));
 process.chdir(repoRoot);
+
+// Detect if running in dev mode (alchemy dev) vs deploy mode (alchemy deploy)
+// Alchemy passes "--dev" flag, not "dev" as a positional argument
+const isDevMode = process.argv.includes("--dev");
 
 /**
  * Fix: prevent "old build" deployments.
@@ -109,9 +113,30 @@ async function contentHash(paths: string[]): Promise<string> {
   return hash.digest("hex");
 }
 
+async function readDevVars(filePath: string): Promise<Record<string, string>> {
+  try {
+    const contents = await readFile(path.resolve(filePath), "utf8");
+    return parse(contents);
+  } catch (error) {
+    const fsError = error as NodeJS.ErrnoException | null;
+    if (fsError?.code === "ENOENT") {
+      return {};
+    }
+    throw error;
+  }
+}
+
+function normalizeUrl(value: string): string {
+  return value.trim().replace(/\/+$/, "");
+}
+
 config({ path: "./.env" });
 config({ path: "./apps/web/.env" });
 config({ path: "./apps/server/.env" });
+
+const devVars = isDevMode ? await readDevVars("apps/server/.dev.vars") : {};
+const getRuntimeEnv = (key: string): string | undefined =>
+  isDevMode ? devVars[key] ?? process.env[key] : process.env[key];
 
 const app = await alchemy("spectral-notify");
 
@@ -138,8 +163,10 @@ await Exec("db-generate", {
   command: "pnpm run db:generate",
 });
 
-const db = await D1Database("database", {
+const db = await D1Database("spectral-notify-database-spectralgo", {
+  name: "spectral-notify-database-spectralgo",
   migrationsDir: "packages/db/src/migrations",
+  adopt: true, // Adopt existing database if it already exists in Cloudflare
 });
 
 // Output database dashboard URL
@@ -169,12 +196,34 @@ const workflow = DurableObjectNamespace("workflow", {
   sqlite: true,
 });
 
-// Create server first to get its URL for the web build
+// Define custom domains for production OAuth and CORS configuration
+const SERVER_CUSTOM_DOMAIN = "notify-api.spectralgo.com";
+const WEB_CUSTOM_DOMAIN = "notify.spectralgo.com";
+
+const DEFAULT_DEV_SERVER_URL = "http://localhost:8094";
+const DEFAULT_DEV_WEB_ORIGIN = "http://localhost:3014";
+
+// Use dev vars (if present) in dev mode, custom domains in production
+const serverUrl = isDevMode
+  ? normalizeUrl(getRuntimeEnv("BETTER_AUTH_URL") ?? DEFAULT_DEV_SERVER_URL)
+  : `https://${SERVER_CUSTOM_DOMAIN}`;
+const corsOrigin = isDevMode
+  ? (getRuntimeEnv("CORS_ORIGIN") ?? DEFAULT_DEV_WEB_ORIGIN).trim()
+  : `https://${WEB_CUSTOM_DOMAIN}`;
+const viteServerUrl = isDevMode
+  ? normalizeUrl(process.env.VITE_SERVER_URL || serverUrl)
+  : `https://${SERVER_CUSTOM_DOMAIN}`;
+const authCookieDomain = isDevMode
+  ? undefined
+  : getRuntimeEnv("BETTER_AUTH_COOKIE_DOMAIN") ?? ".spectralgo.com";
+
+// Create server worker with explicit origin bindings.
 export const server = await Worker("server", {
+  adopt: true, // Adopt existing worker if it already exists in Cloudflare
   cwd: "apps/server",
   entrypoint: "src/index.ts",
   compatibility: "node",
-  domains: ["notify-api.spectralgo.com"],
+  domains: [SERVER_CUSTOM_DOMAIN],
   bundle: {
     // Configure esbuild to load .sql files as text strings
     // This allows Drizzle migrations to import SQL files directly
@@ -188,15 +237,20 @@ export const server = await Worker("server", {
     COUNTER: counter,
     TASK: task,
     WORKFLOW: workflow,
-    CORS_ORIGIN: "", // Set dynamically after web is created
-    BETTER_AUTH_SECRET: alchemy.secret(process.env.BETTER_AUTH_SECRET),
-    BETTER_AUTH_URL: "", // Set dynamically after server URL is known
-    ALLOWED_EMAIL: alchemy.secret(process.env.ALLOWED_EMAIL),
+    // CORS origin - uses env in dev, custom domain in production
+    CORS_ORIGIN: corsOrigin,
+    BETTER_AUTH_SECRET: alchemy.secret(getRuntimeEnv("BETTER_AUTH_SECRET")),
+    // OAuth callback URL - uses env in dev, custom domain in production
+    BETTER_AUTH_URL: serverUrl,
+    ...(authCookieDomain
+      ? { BETTER_AUTH_COOKIE_DOMAIN: authCookieDomain }
+      : {}),
+    ALLOWED_EMAIL: alchemy.secret(getRuntimeEnv("ALLOWED_EMAIL")),
     SPECTRAL_NOTIFY_API_KEY: alchemy.secret(
-      process.env.SPECTRAL_NOTIFY_API_KEY
+      getRuntimeEnv("SPECTRAL_NOTIFY_API_KEY")
     ),
-    GOOGLE_CLIENT_ID: alchemy.secret(process.env.GOOGLE_CLIENT_ID),
-    GOOGLE_CLIENT_SECRET: alchemy.secret(process.env.GOOGLE_CLIENT_SECRET),
+    GOOGLE_CLIENT_ID: alchemy.secret(getRuntimeEnv("GOOGLE_CLIENT_ID")),
+    GOOGLE_CLIENT_SECRET: alchemy.secret(getRuntimeEnv("GOOGLE_CLIENT_SECRET")),
   },
   dev: {
     port: 8094,
@@ -205,23 +259,20 @@ export const server = await Worker("server", {
 
 // Create web with server URL available at build time
 export const web = await Vite("web", {
+  adopt: true, // Adopt existing Vite deployment if it already exists in Cloudflare
   cwd: "apps/web",
   assets: "dist",
   compatibility: "node",
-  domains: ["notify.spectralgo.com"],
+  domains: [WEB_CUSTOM_DOMAIN],
   bindings: {
-    VITE_SERVER_URL: server.url!,
+    // Server URL - uses env in dev (via Vite's .env), custom domain in production build
+    VITE_SERVER_URL: viteServerUrl,
     VITE_BUILD_ID: webBuildId,
   },
   dev: {
     command: "pnpm run dev",
   },
 });
-
-// Set dynamic bindings - use server.url and web.url for correct dev/prod URLs
-// Type assertion needed because alchemy types bindings as readonly
-(server.bindings as { BETTER_AUTH_URL: string }).BETTER_AUTH_URL = server.url!;
-(server.bindings as { CORS_ORIGIN: string }).CORS_ORIGIN = web.url!;
 
 console.log(`Web    -> ${web.url}`);
 console.log(`Server -> ${server.url}`);
