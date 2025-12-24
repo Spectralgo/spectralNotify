@@ -241,10 +241,6 @@ export default function SignInForm({
 
                   <GoogleSignInButton
                     redirectTo={redirectTo || "/"}
-                    onSuccess={() => {
-                      navigate({ to: redirectTo || "/" });
-                      toast.success("Sign in successful");
-                    }}
                     onError={(err) => setError(err.message)}
                   />
                 </div>

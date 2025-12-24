@@ -283,10 +283,6 @@ export default function SignUpForm({
 
                   <GoogleSignInButton
                     redirectTo={redirectTo || "/"}
-                    onSuccess={() => {
-                      navigate({ to: redirectTo || "/" });
-                      toast.success("Sign up successful");
-                    }}
                     onError={(err) => setError(err.message)}
                   />
                 </div>

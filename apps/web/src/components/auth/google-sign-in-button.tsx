@@ -4,13 +4,11 @@ import { Button } from "../ui/button";
 
 interface GoogleSignInButtonProps {
   redirectTo?: string;
-  onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
 
 export function GoogleSignInButton({
   redirectTo,
-  onSuccess,
   onError,
 }: GoogleSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,20 +21,13 @@ export function GoogleSignInButton({
         ? new URL(redirectTo, window.location.origin).toString()
         : window.location.origin;
 
-      // Use One Tap for inline Google sign-in (no redirect to Google)
-      await authClient.oneTap({
+      // Standard OAuth flow - redirects to Google
+      await authClient.signIn.social({
+        provider: "google",
         callbackURL,
-        fetchOptions: {
-          onSuccess: () => {
-            setIsLoading(false);
-            onSuccess?.();
-          },
-          onError: (ctx) => {
-            setIsLoading(false);
-            onError?.(new Error(ctx.error.message));
-          },
-        },
       });
+      // Note: No success handling here - user is redirected to Google
+      // After OAuth completes, Better Auth redirects back to callbackURL
     } catch (error) {
       onError?.(error as Error);
       setIsLoading(false);
