@@ -3,8 +3,10 @@ import { expo } from "@better-auth/expo";
 import { db } from "@spectralNotify/db";
 import * as schema from "@spectralNotify/db/schema/auth";
 import { betterAuth } from "better-auth";
-import { createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
 
 const parseOrigins = (value?: string): string[] =>
   value?.split(",").map((origin) => origin.trim()).filter(Boolean) ?? [];
@@ -57,6 +59,22 @@ const stateCookieConfig = isSecureOrigin
     }
   : {};
 
+// Helper function to check if email is in whitelist
+const isEmailWhitelisted = (email: string, whitelist?: string): boolean => {
+  // If whitelist is empty or not set, allow all users
+  if (!whitelist || whitelist.trim() === "") {
+    return true;
+  }
+  
+  // Parse comma-separated emails and check if email is in the list
+  const allowedEmails = whitelist
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  
+  return allowedEmails.includes(email.toLowerCase());
+};
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "sqlite",
@@ -98,6 +116,53 @@ export const auth = betterAuth({
     ...stateCookieConfig,
     // Enable cross-subdomain cookies when an explicit domain is configured.
     ...crossSubDomainConfig,
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          const email = user.email;
+          const whitelist = env.ALLOWED_EMAIL;
+          
+          if (!isEmailWhitelisted(email, whitelist)) {
+            throw new APIError("BAD_REQUEST", {
+              message: "Your email is not authorized to sign up",
+            });
+          }
+          
+          return { data: user };
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          // Get user email from the session's userId
+          // Create a properly configured drizzle instance with schema
+          const database = drizzle(env.DB, {
+            schema,
+          });
+          
+          const user = await database
+            .select()
+            .from(schema.user)
+            .where(eq(schema.user.id, session.userId))
+            .get();
+          
+          if (user) {
+            const whitelist = env.ALLOWED_EMAIL;
+            
+            if (!isEmailWhitelisted(user.email, whitelist)) {
+              throw new APIError("FORBIDDEN", {
+                message: "Your email is not authorized to access this resource",
+              });
+            }
+          }
+          
+          return { data: session };
+        },
+      },
+    },
   },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
