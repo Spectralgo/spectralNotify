@@ -23,7 +23,50 @@ const requireApiKey = o.middleware(async ({ context, next }) => {
   return next({ context });
 });
 
-export const protectedProcedure = publicProcedure.use(requireAuth);
+// Mock database call to check if email is whitelisted
+// In the future, this can be replaced with an actual database query
+const checkEmailWhitelist = async (
+  email: string,
+  whitelist: string,
+): Promise<boolean> => {
+  // Simulate async database call
+  await Promise.resolve();
+  
+  // If whitelist is empty or not set, allow all users
+  if (!whitelist || whitelist.trim() === "") {
+    return true;
+  }
+  
+  // Parse comma-separated emails and check if email is in the list
+  const allowedEmails = whitelist
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  
+  return allowedEmails.includes(email.toLowerCase());
+};
+
+const requireWhitelist = o.middleware(async ({ context, next }) => {
+  // This middleware should only run after requireAuth, so session.user should exist
+  const userEmail = context.session?.user?.email;
+  
+  if (!userEmail) {
+    throw new ORPCError("UNAUTHORIZED");
+  }
+  
+  const whitelist = context.ALLOWED_EMAIL || "";
+  const isAllowed = await checkEmailWhitelist(userEmail, whitelist);
+  
+  if (!isAllowed) {
+    throw new ORPCError("FORBIDDEN", {
+      message: "Your email is not authorized to access this resource",
+    });
+  }
+  
+  return next({ context });
+});
+
+export const protectedProcedure = publicProcedure.use(requireAuth).use(requireWhitelist);
 export const apiKeyProcedure = publicProcedure.use(requireApiKey);
 
 // Middleware
